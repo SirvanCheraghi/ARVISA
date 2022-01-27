@@ -10,7 +10,7 @@ if ($ip_dec >= $lower_dec and $ip_dec <= $upper_dec) $ok=true;}
 if (!$ok) die();
 date_default_timezone_set('Asia/Tehran');
 error_reporting(0);
-define('API_KEY','توکن'); 
+define('API_KEY','5125977425:AAFGWU4liKp7kVN4zhXVcWDciE2WDnsSwaE'); 
 // توکن ربات
 function bot($method,$datas=[]){
     $url = "https://api.telegram.org/bot".API_KEY."/".$method;
@@ -48,10 +48,10 @@ $new_chat_member_id = $update->message->new_chat_member->id;
 $new_chat_member_username = $update->message->new_chat_member->username;
 $rpto = $update->message->reply_to_message->forward_from->id;
 //┅┅//
-$admins = array("918222513","000000000");
+$admins = array("1949071335","2127270312");
 // ایدی عددی مدیران👆
-$bottag = "sponzy_bot"; // یوزرنیم ربات بدون @
-$channel = "sponzy_ir"; // یوزرنیم چنل بدون @
+$bottag = "Arvisa_Bot"; // یوزرنیم ربات بدون @
+$channel = "ArvisaOfficial"; // یوزرنیم چنل بدون @
 //┅┅//
 $bugun = date('d-M Y',strtotime('3 hour'));
 $name_bot = Botinfo('first_name');
@@ -399,7 +399,7 @@ bot('editMessagetext',[
             'inline_keyboard'=>[
 [['text'=>"📚 راهنما ربات",'callback_data'=>'help_g']],
 [['text'=>"⭐️ افزودن $name_bot به گروه ⭐️",'url'=>"t.me/$bottag?startgroup=new"]],
-[['text'=>"️🗨 پشتیبانی 🗨",'url'=>"t.me/virtualdev"]], // آیدی پشتیبانی
+[['text'=>"️🗨 پشتیبانی 🗨",'url'=>"t.me/Everest666"]], // آیدی پشتیبانی
               ]
        ])
         ]);}else{
