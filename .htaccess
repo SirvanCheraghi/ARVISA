@@ -1,0 +1,5 @@
+<ifModulemod_deflate.c>
+<filesMatch "\.(css|js|x?html?|php|woff|ttf|png|jpg|gif)$">
+SetOutputFilter DEFLATE
+<filesMatch />
+<ifModule/>
