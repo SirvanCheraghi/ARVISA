@@ -1,2081 +1,1271 @@
-<?php if (substr_count($_SERVER[‘HTTP_ACCEPT_ENCODING’], ‘gzip’)) ob_start(“ob_gzhandler”); else ob_start(); ?>
 <?php
-
-flush();
-error_reporting(0);
-ini_set('error_logs','off');
+$telegram_ip_ranges = [['lower' => '149.154.160.0', 'upper' => '149.154.175.255'],['lower' => '91.108.4.0',    'upper' => '91.108.7.255']];
+$ip_dec = (float) sprintf("%u", ip2long($_SERVER['REMOTE_ADDR']));
+$ok=false;
+foreach ($telegram_ip_ranges as $telegram_ip_range) if (!$ok) {
+//-
+$lower_dec = (float) sprintf("%u", ip2long($telegram_ip_range['lower']));
+$upper_dec = (float) sprintf("%u", ip2long($telegram_ip_range['upper']));
+if ($ip_dec >= $lower_dec and $ip_dec <= $upper_dec) $ok=true;}
+if (!$ok) die();
 date_default_timezone_set('Asia/Tehran');
-//--------[Your Config]--------//
-require "config.php";
-
-//---------------------------------------------IDBot
-$GetINFObot = json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getMe"));
-@$usernamebot = $GetINFObot->result->username;
-$usernamebot = "Arvisa_bot"; //آیدی ربات بدون @
-define('DEVELOPER',$Dev);
-define('API_KEY',$Token);
-$bot_id=json_decode(file_get_contents('https://api.telegram.org/bot'.API_KEY.'/getMe'))->result->id;
-define('ROBOT_ID',$bot_id);
-$bot_name=json_decode(file_get_contents('https://api.telegram.org/bot'.API_KEY.'/getMe'))->result->first_name;
-#functions
+error_reporting(0);
+define('API_KEY','توکن'); 
+// توکن ربات
 function bot($method,$datas=[]){
-	$ch=curl_init();
-	curl_setopt($ch,CURLOPT_URL,'https://api.telegram.org/bot'.API_KEY.'/'.$method);
-	curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
-	curl_setopt($ch,CURLOPT_POSTFIELDS,$datas);
-	return json_decode(curl_exec($ch));
+    $url = "https://api.telegram.org/bot".API_KEY."/".$method;
+    $ch = curl_init();
+    curl_setopt($ch,CURLOPT_URL,$url);
+    curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
+    curl_setopt($ch,CURLOPT_POSTFIELDS,$datas);
+    $res = curl_exec($ch);
+    if(curl_error($ch)){
+        var_dump(curl_error($ch));
+    }else{
+        return json_decode($res);}}
+function Botinfo($what){
+    return bot('GetMe',[])->result->$what;}
+//━━//
+$update = json_decode(file_get_contents('php://input'));
+$message = $update->message;
+$reply_msgid = $message->reply_to_message->message_id;
+$chat_id = $message->chat->id;
+$message_id = $message->message_id;
+$from_id = $message->from->id;
+$text = $message->text;
+$first_name = $message->from->first_name;
+$last_name = $message->from->last_name;
+$username = $message->from->username;
+$tc = $update->message->chat->type;
+$data = $update->callback_query->data;
+$messageid = $update->callback_query->message->message_id;
+$chatid = $update->callback_query->message->chat->id;
+$fromid = $update->callback_query->from->id;
+$textt = $update->callback_query->message->text;
+$inline = $update->inline_query->query;
+$inline_message_id = $update->callback_query->inline_message_id;
+$new_chat_member_id = $update->message->new_chat_member->id;
+$new_chat_member_username = $update->message->new_chat_member->username;
+$rpto = $update->message->reply_to_message->forward_from->id;
+//┅┅//
+$admins = array("918222513","000000000");
+// ایدی عددی مدیران👆
+$bottag = "sponzy_bot"; // یوزرنیم ربات بدون @
+$channel = "sponzy_ir"; // یوزرنیم چنل بدون @
+//┅┅//
+$bugun = date('d-M Y',strtotime('3 hour'));
+$name_bot = Botinfo('first_name');
+$forchaneel = json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=@$channel&user_id=".$chat_id));
+$user = json_decode(file_get_contents("data/users/$from_id.json"),true);
+$stats_n = json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=$chat_id&user_id=".$from_id),true);
+$statjsonq = json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=$chatid&user_id=".$fromid),true);
+$setp = $user['step']; // User STEP
+$status_n = $stats_n['result']['status']; // STATS
+$statusq = $statjsonq['result']['status']; // STATS
+$tch = $forchaneel->result->status; // True Channel
+$all_gaps = file_get_contents("data/allgap.txt");
+$all_users = file_get_contents("data/allusers.txt");
+$yadauto = file_get_contents("data/autoYAD.txt");
+if(isset($data)){
+$fid = $update->callback_query->from->id;}
+if(isset($message->from)){
+$fid = $message->from->id;}
+//=== dev : @virtualdev ===\\
+function deletefolder($path){
+ if($handle=opendir($path)){
+  while (false!==($file=readdir($handle))){
+   if($file<>"." AND $file<>".."){
+    if(is_file($path.'/'.$file)){ 
+     @unlink($path.'/'.$file); } 
+    if(is_dir($path.'/'.$file)) { 
+     deletefolder($path.'/'.$file); 
+     @rmdir($path.'/'.$file); }} } }}
+function step($from_id,$step){
+$user = json_decode(file_get_contents("data/users/$from_id.json"),true);
+$user["step"] = "$step";
+$outjson = json_encode($user,true);
+file_put_contents("data/users/$from_id.json",$outjson);
+return true;
 }
-function sendMessage($chat_id,$text,$parse_mode,$reply_markup,$reply_to_message_id){
+function rand_string( $length ){
+$chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@";
+return substr(str_shuffle($chars),0,$length);
+}
+//━━//
+if($yadauto == null ){
+file_put_contents("data/autoYAD.txt","⬜");
+}
+if($tc == "private" ){
+$all_users2 = explode("\n",$all_users); 
+if(!in_array($chat_id,$all_users2)){
+$tctctct = fopen("data/allusers.txt", "a") or die("Unable to open file!");
+fwrite($tctctct, "$chat_id\n");
+fclose($tctctct);}}
+$user_flood = file_get_contents("data/spam/$fid.txt");
+if($user_flood < time()){ 
+$spamtime = 0.09; // تایم اسپم پشت سرهم
+$tt = time() + $spamtime;
+file_put_contents("data/spam/$fid.txt",$tt);
+//━━//
+if($text == "/start"){
+if($tc == "private" ){
+if($tch != 'member' && $tch != 'creator' && $tch != 'administrator' ){
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"❗️کاربر گرامی برای استفاده از ربات و حمایت از ما ابتدا در چنل زیر عضو شوید و سپس /start را ارسال کنید!",
+ 'reply_markup' => json_encode([
+ 'inline_keyboard' => [
+    [['text' => "🛎️ عضویت در کانال️", 'url' => "https://t.me/$channel"]],
+]])
+]);
+}else{
+step($chat_id,"none");
+ bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"👋🏻 سلام [$first_name](tg://user?id=$from_id)
+خوش اومدی 🥳
+میخوای گروهت جذاب شه؟ $name_bot ! تو گروهت اد کن😎
+برا اجرای دستوراتم از دکمه ها استفاده کن 😇",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                [['text'=>"💞 افزودن $name_bot به گروه 💞",'url'=>"https://t.me/$bottag?startgroup=new"]],
+              [['text'=>"📧 یاد دادن کلمه",'callback_data'=>'addkalame'],['text'=>"🪄 راهنمای نصب",'callback_data'=>'sar']],
+  ] ]) ]);  }}}
+
+	if(strpos($text,"'") !== false or strpos($text,'"') !== false or strpos($text,"}") !== false or strpos($text,"{") !== false or strpos($text,")'") !== false or strpos($text,"(") !== false){	
+	if($tc == "private" ){
+	$tt = time() + 9999999999999999;
+file_put_contents("data/spam/$from_id.txt",$tt);
+if(!in_array($chat_id,$admins)){
+step($chat_id,"none");
+  bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"🔔 به دلیل ارسال کد مخرب به ربات، بلاک شدید!",
+ 'parse_mode'=>"HTML",
+  'reply_to_message_id'=>$message_id,
+]); 
+ bot('sendMessage',[
+ 'chat_id'=>$admins[0],
+ 'text'=>"[▫️ این کاربر کد مخرب ارسال کرد!](tg://user?id=$from_id)",
+ 'parse_mode'=>"MarkDown",
+]); 
+}else{
+ bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"🔰 شما از ربات به دلیل به خطر انداختن امنیت مسدود شدید!",
+ 'parse_mode'=>"HTML",
+  'reply_to_message_id'=>$message_id,
+ ]); }}}
+elseif($data == "back"){
+step($chatid,"none");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+            'text' => "📱 به منوی اصلی بازگشتید
+
+برا اجرای دستوراتم از دکمه ها استفاده کن 😇",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                [['text'=>"💞 افزودن $name_bot به گروه 💞",'url'=>"https://t.me/$bottag?startgroup=new"]],
+              [['text'=>"📧 یاد دادن کلمه",'callback_data'=>'addkalame'],['text'=>"🪄 راهنمای نصب",'callback_data'=>'sar']],
+              ]]) ]);}
+
+/*
+بخش راهنما نصب
+*/
+elseif($data == "sar"){
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+            'text' => "فقط کافیه من رو تو گروه اضافه کنی و مدیرم کنی",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                [['text'=>"🤍 اشتراک گزاری",'switch_inline_query'=>"All you have to do is add me to the group and admin me"]],
+              [['text'=> "🏛 منوی اصلی", 'callback_data'=>"back"]],
+              ]
+        ])
+        ]);}
+elseif($data == "addkalame"){
+	step($chatid,"addkalame");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+            'text' => "🎓 کلمه مورد نظر را ارسال کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+[['text'=> "🏛 منوی اصلی", 'callback_data'=>"back"]],
+              ]
+        ])
+        ]);}
+
+elseif($user["step"] == "addkalame" && $tc == "private"){
+if(!file_exists("data/kalamat/$text.txt")){
+if(strlen($text) < 160 ){
+$user["kalame"] = $text;
+$user["step"] = "adduwgw";
+$outjson = json_encode($user,true);
+file_put_contents("data/users/$from_id.json",$outjson);
 	bot('sendMessage',[
-	'chat_id'=>$chat_id,
-	'text'=>$text,
-	'parse_mode'=>$parse_mode,
-	'disable_web_page_preview'=>true,
-	'reply_markup'=>$reply_markup,
-	'reply_to_message_id'=>$reply_to_message_id
-	]);
-}
-function editMessageText($chat_id,$message_id,$text,$parse_mode,$reply_markup){
-	bot('editMessageText',[
-	'chat_id'=>$chat_id,
-	'message_id'=>$message_id,
-	'text'=>$text,
-	'parse_mode'=>$parse_mode,
-	'disable_web_page_preview'=>true,
-	'reply_markup'=>$reply_markup
-	]);
-}
-function editMessageReplyMarkup($chat_id,$message_id,$reply_markup){
-	bot('editMessageReplyMarkup',[
-	'chat_id'=>$chat_id,
-	'message_id'=>$message_id,
-	'reply_markup'=>$reply_markup
-	]);
-}
-function deleteMessage($chat_id,$message_id){
-	bot('deleteMessage',[
-	'chat_id'=>$chat_id,
-	'message_id'=>$message_id
-	]);
-}
-function kickChatMember($chat_id,$user_id){
-	Bot('kickChatMember',[
-	'chat_id'=>$chat_id,
-	'user_id'=>$user_id
-	]);
-}
-function answerCallbackQuery($text,$show_alert){
-	bot('answerCallbackQuery',[
-	'callback_query_id'=>json_decode(file_get_contents('php://input'))->callback_query->id,
-	'text'=>$text,
-	'show_alert'=>$show_alert
-	]);
-}
-function getChat($chat_id){
-	return json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChat?chat_id=$chat_id"));
-}
-function leaveChat($chat_id){
-	bot('leaveChat',[
-	'chat_id'=>$chat_id
-	]);
-}
+ 'chat_id'=>$chat_id,
+ 'text'=>"🧾 جواب را ارسال کنید
+ 
+ 📔 میتوانید جواب های رندوم هرکدام در یک خط ارسال کنید!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+[['text'=> "🏛 منوی اصلی", 'callback_data'=>"back"]],
+              ]
+        ])
+ ]); }else{
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"💬 کلمه شما بیش از اندازه طولانی است
+کلمه ای دیگر ارسال کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+[['text'=> "🏛 منوی اصلی", 'callback_data'=>"back"]],
+              ]])
+]); }}else{
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"💬 این کلمه از قبل در ربات موجود است
+کلمه ای دیگر ارسال کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[[['text'=> "🏛 منوی اصلی", 'callback_data'=>"back"]],]
+        ]) ]); }}
+elseif($user["step"] == "adduwgw" && $tc == "private"){
+if(strlen($text) < 250 ){
+$user["step"] = "none";
+$outjson = json_encode($user,true);
+file_put_contents("data/users/$from_id.json",$outjson);
+$Kalame = $user["kalame"];
+if($yadauto == "⬜"){
+file_put_contents("data/kalamat/$Kalame.txt",$text);
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"🎀 کلمه ارسالی شما در ربات ثبت شد
+🌹 با تشکر",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+[['text'=> "🏛 منوی اصلی", 'callback_data'=>"back"]],
+              ]
+        ])
+ ]);  }else{
+$r = rand(11111111,999999999);
+$rand = $r;
+$users = json_decode(file_get_contents("data/int/$rand.json"),true);
+$users["id"] = $chat_id;
+$users["kalame"] = $Kalame;
+$users["javab"] = $text;
+$outjsons = json_encode($users,true);
+file_put_contents("data/int/$rand.json",$outjsons);
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"🦋 کلمه ارسالی شما به لیست تایید پیوست!
 
-function textToEnglish($text){
-	switch($text){
-		case 'استیکر';
-		$new_text='sticker';
-		break;
-		case 'عکس';
-		$new_text='photo';
-		break;
-		case 'گیف';
-		$new_text='gif';
-		break;
-		case 'فیلم';
-		$new_text='video';
-		break;
-		case 'ویدیوسلفی';
-		$new_text='videoselfi';
-		break;
-		case 'صدا';
-		$new_text='voice';
-		break;
-		case 'موزیک';
-		$new_text='music';
-		break;
-		case 'فایل';
-		$new_text='document';
-		break;
-		case 'مخاطب';
-		$new_text='contact';
-		break;
-		case 'مکان';
-		$new_text='location';
-		break;
-		case 'بازی';
-		$new_text='game';
-		break;
-		case 'متن';
-		$new_text='text';
-		break;
-		case 'لینک';
-		$new_text='link';
-		break;
-		case 'یوزرنیم';
-		$new_text='username';
-		break;
-		case 'هشتگ';
-		$new_text='hashtag';
-		break;
-		case 'بولد';
-		$new_text='bold';
-		break;
-		case 'ایتالیک';
-		$new_text='italic';
-		break;
-		case 'کدینگ';
-		$new_text='coding';
-		break;
-		case 'فوروارد';
-		$new_text='forward';
-		break;
-		case 'سرویس';
-		$new_text='tgservice';
-		break;
-		case 'ریپلای';
-		$new_text='reply';
-		break;
-		case 'کپشن';
-		$new_text='caption';
-		break;
-		case 'ربات';
-		$new_text='bot';
-		break;
-		case 'عضویت';
-		$new_text='join';
-	}
-	return $new_text;
-}
-function textToPersian($text){
-	switch($text){
-		case 'sticker';
-		$new_text='استیکر';
-		break;
-		case 'photo';
-		$new_text='عکس';
-		break;
-		case 'gif';
-		$new_text='گیف';
-		break;
-		case 'video';
-		$new_text='فیلم';
-		break;
-		case 'videoselfi';
-		$new_text='ویدیوسلفی';
-		break;
-		case 'voice';
-		$new_text='صدا';
-		break;
-		case 'music';
-		$new_text='موزیک';
-		break;
-		case 'document';
-		$new_text='فایل';
-		break;
-		case 'contact';
-		$new_text='مخاطب';
-		break;
-		case 'location';
-		$new_text='مکان';
-		break;
-		case 'game';
-		$new_text='بازی';
-		break;
-		case 'text';
-		$new_text='متن';
-		break;
-		case 'link';
-		$new_text='لینک';
-		break;
-		case 'username';
-		$new_text='یوزرنیم';
-		break;
-		case 'hashtag';
-		$new_text='هشتگ';
-		break;
-		case 'bold';
-		$new_text='بولد';
-		break;
-		case 'italic';
-		$new_text='ایتالیک';
-		break;
-		case 'coding';
-		$new_text='کدینگ';
-		break;
-		case 'forward';
-		$new_text='فوروارد';
-		break;
-		case 'tgservice';
-		$new_text='سرویس';
-		break;
-		case 'reply';
-		$new_text='ریپلای';
-		break;
-		case 'caption';
-		$new_text='کپشن';
-		break;
-		case 'bot';
-		$new_text='ربات';
-		break;
-		case 'join';
-		$new_text='عضویت';
-	}
-	return $new_text;
-}
-$online = [
-"بلللله",
-"جاانمم",
-"هااااا",
-"جونم",
-"انلاینم",
-"دست از سرم بردار",
-"چیه",
-"الهی کرونا بگیری راحت بشیم",
-" خداوکیلی 100 تومن میدم انقدر صدام نکن",
-"ول کن نیستیا",
-":/",
-"یبار دیگه بگو ربات تا بزنم تو دهنت",
-"من رباتم بابات نیستم که انقدر صدام میکنی",
-"انلاینم بشور اگه انلاینم نبودم که گروه فنا رفته بود",
-"پووووف ول کن مام نیست این بشر",
-"انلاینم حاجی",
-"روشنم",
-"مررررگگ",
-"زهر مار",
-"ددددررررردددد",
-"ممممرررضضض",
-"کرم داری انقدر صدام میکنی؟",
+⚠️ <b>( از ارسال مجدد این کلمه خود داری کنید )</b>
+🪄 پس از تایید به شما اعلام میشود! سپاس از شما🙏🏻🌹",
+ 'parse_mode'=>"HTML",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[[['text'=> "🏛 منوی اصلی", 'callback_data'=>"back"]],]])
+ ]); 
+ $yaro = "[Open Profile](tg://user?id=$from_id)";
+bot('sendMessage',[
+ 'chat_id'=>$admins[0],
+ 'text'=>"📯 کلمه ( `$Kalame` ) توسط ( $yaro )
+با پاسخ های:
+`$text`
 
-    ];
-$rdonline = $online[rand(0,count($online)-1)];
-function saveJson($file,$date){
-	$new_data=json_encode($date);
-	file_put_contents($file,$new_data);
-}
-function chat_id(){
-	$update=json_decode(file_get_contents('php://input'));
-	$chatid=$update->message->chat->id;
-	$chatid2=$update->callback_query->message->chat->id;
-	return $chat_id=$chatid2?$chatid2:$chatid;
-}
-function from_id(){
-	$update=json_decode(file_get_contents('php://input'));
-	$fromid=$update->message->from->id;
-	$fromid2=$update->callback_query->from->id;
-	return $from_id=$fromid2?$fromid2:$fromid;
-}
+❗️ به لیست انتظار پیوست!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+[['text'=> "🤍 تایید", 'callback_data'=>"ta_$rand"],['text'=> "🖤 رد کردن", 'callback_data'=>"la_$rand"]],
+[['text'=> "💔 مسدود کردن شخص 💔", 'callback_data'=>"ba_$from_id"]],
+              ]
+        ])
+ ]);  }}else{
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"💬 جواب ارسالی شما بیش از اندازه طولانی است!
+پاسخی دیگر ارسال کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+[['text'=> "🏛 منوی اصلی", 'callback_data'=>"back"]],
+  ]
+        ])
+ ]);}}
+elseif(strpos($data,"la_") !== false ){
+$ok = str_replace("la_","",$data);
+$users = json_decode(file_get_contents("data/int/$ok.json"),true);
+$id = $users['id'];
+$kalam = $users['kalame'];
+bot('sendMessage',[
+ 'chat_id'=>$id,
+'text'=>"💗 کاربر گرامی، کلمه $kalam تایید نشد!
+🖋 از ارسال مجدد آن خودداری کنید.",
+ ]); 
+ unlink("data/int/$ok.json");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+            'text' => "💘 کلمه رد شد!",
+ 'parse_mode'=>"MarkDown",
+        ]); }
+ elseif(strpos($data,"ta_") !== false ){
+ $ok = str_replace("ta_","",$data);
+$users = json_decode(file_get_contents("data/int/$ok.json"),true);
+$kalam = $users['kalame'];
+$jav = $users['javab'];
+$id = $users['id'];
+file_put_contents("data/kalamat/$kalam.txt",$jav);
+bot('sendMessage',[
+ 'chat_id'=>$id,
+ 'text'=>"🌹کاربر گرامی، کلمه $kalam به ربات اضافه شد.
+با تشکر 🙏🏻",
+ ]); 
+unlink("data/int/$ok.json");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+            'text' => "💌 کلمه با موفقیت تایید شد!",
+ 'parse_mode'=>"MarkDown",
+        ]); }
+//=== dev : @virtualdev ===\\
+ elseif(strpos($data,"ba_") !== false ){
+ $ok = str_replace("ba_","",$data);
+$tt = time() + 9999999999999999;
+file_put_contents("data/spam/$ok.txt",$tt);
+	bot('sendMessage',[
+ 'chat_id'=>$ok,
+ 'text'=>"🛡️ شما از ربات توسط مدیریت مسدود شدید!",
+ 'parse_mode'=>"MarkDown",
+	 ]); 
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+            'text' => "🎭 کاربر از ربات مسدود شد!",
+ 'parse_mode'=>"MarkDown",
+        ]); }
+//━━کامل━//
+if($text == "panel" or $text == "پنل"){
+   $id_bot = bot('GetMe',[]) -> result -> id;
+	$stats_b = json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=$chat_id&user_id=".$id_bot),true);
+$status_b = $stats_b['result']['status'];
+if ($status_b == 'creator' or $status_b == 'administrator' ){
+if ($status_n == 'creator' or $status_n == 'administrator' ){
+ bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"⚙️ در این بخش شما میتوانید دستورات مختلف ربات را مشاهده و استفاده کنید:
+📆: $bugun",
+ 'parse_mode'=>"MarkDown",
+  'reply_to_message_id'=>$message_id,
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[[['text'=>"🤔 راهنما نصب",'switch_inline_query'=>"All you have to do is add me to the group and admin me"],
+ ['text'=>"📚 راهنما ربات",'callback_data'=>'help_g']],
+[['text'=>"⭐️ افزودن $name_bot به گروه ⭐️",'url'=>"t.me/$bottag?startgroup=new"]],
+]]) ]); 
+}else{
+ bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"🤨 شما ادمین گروه نیستید!",
+ 'parse_mode'=>"MarkDown",
+  'reply_to_message_id'=>$message_id,
+ ]); }
+}else{
+bot('sendMessage',[
+'chat_id' =>$chat_id,
+'text' => "⚠️ برای فعالیت در گروه ابتدا من را ادمین کنید!",
+ 'parse_mode'=>"MarkDown",
+ 'reply_to_message_id'=>$message_id,
+]);}}
+if($data == "back_g"){
+if ($statusq == 'creator' or $statusq == 'administrator' or in_array($fromid,$admins) ){
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+            'text' =>"🔁 به پنل اصلی بازگشتید!
+⚙️ در این بخش شما میتوانید دستورات مختلف ربات را مشاهده و استفاده کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+[['text'=>"📚 راهنما ربات",'callback_data'=>'help_g']],
+[['text'=>"⭐️ افزودن $name_bot به گروه ⭐️",'url'=>"t.me/$bottag?startgroup=new"]],
+[['text'=>"️🗨 پشتیبانی 🗨",'url'=>"t.me/virtualdev"]], // آیدی پشتیبانی
+              ]
+       ])
+        ]);}else{
+	bot('answercallbackquery', [
+        'callback_query_id' => $update->callback_query->id,
+        'text' => "🤨 شما ادمین گروه نیستید!",
+        'show_alert' => false
+    ]);}}
+elseif($data == "help_g"){
+if ($statusq == 'creator' or $statusq == 'administrator' or in_array($fromid,$admins) ){
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+          'text' => "📖 راهنمای دستورات $name_bot گروه!
 
+~ دریافت اطلاعات شما:
+• me - من
 
-function situation($user_id){
-	$update=json_decode(file_get_contents('php://input'));
-	$n=$update->message->chat->type;
-	$n2=$update->callback_query->message->chat->type;
-	if($n!=null){
-		$tc=$update->message->chat->type;
-	}
-	elseif($n2!=null){
-		$tc=$update->callback_query->message->chat->type;
-	}
-	$chat_id=chat_id();
-	$oders=json_decode(file_get_contents("data/groups/".$chat_id."/oders.json"),true);
-	$status=json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=".$chat_id."&user_id=".$user_id))->result->status;
-	$bot_status=json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=".$chat_id."&user_id=".ROBOT_ID))->result->status;
-	if($tc=='supergroup' && $oders['نصب']=='✅'){
-		if($status!='member' && $status!=null && $bot_status!='memebr' && $bot_status!=null){
-			return 'ok';
-		}
-	}
-}
-function situationFilters($user_id){
-	$update=json_decode(file_get_contents('php://input'));
-	$tc=$update->message->chat->type;
-	$chat_id=chat_id();
-	$oders=json_decode(file_get_contents("data/groups/".$chat_id."/oders.json"),true);
-	$status=json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=$chat_id&user_id=".$user_id))->result->status;
-	$bot_status=json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=$chat_id&user_id=".$bot_id))->result->status;
-	if($tc=='supergroup' && $oders['نصب']=='✅'){
-		if($status=='member'){
-			return 'ok';
-		}
-	}
-}
-function filterCmd($text){
-	if(strstr($text,'/')){
-		while(strstr($text,'/')){
-			$text=str_replace('/','',$text);
-		}
-	}
-	if(strstr($text,'!')){
-		while(strstr($text,'!')){
-			$text=str_replace('!','',$text);
-		}
-	}
-	if(strstr($text,'#')){
-		while(strstr($text,'#')){
-			$text=str_replace('#','',$text);
-		}
-	}
-	if(preg_match('/^[A-Z]/',$text)){
-		$text=strtolower($text);
-	}
-	return $text;
-}
-function buttonPanel($language){
-	if($language!='english'){
-		return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-	[['text'=>"$botnm",'url'=>"https://telegram.me/$botus?start"]],
-[['text'=>"🛠تنظیمات گروه🛠️",'callback_data'=>"settings_group"]],
-[['text'=>"👥اد اجباری👥",'callback_data'=>"settings_compulsory_add"],['text'=>"🆔عضویت اجباری🆔",'callback_data'=>"settings_compulsory_join"]],
-[['text'=>"💬پیام مکرر💬",'callback_data'=>"settings_frequent_message"],
-['text'=>"📝محدودیت کاراکتر📝",'callback_data'=>"settings_character_constraint"]],[['text'=>"⛔️سکوت⛔️",'callback_data'=>"settings_silent"],
-		['text'=>"📋راهنمای دستورات📋",'callback_data'=>"cmd_guide"]],
-		[['text'=>"بستن پنل",'callback_data'=>"exit"]],
-		]]);
-	}else{
-		return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-		[['text'=>"Settings group |⚙️",'callback_data'=>"settings_group"],['text'=>"🎚| Settings compulsory add",'callback_data'=>"settings_compulsory_add"]],
-		[['text'=>"Settings compulsory join |💡",'callback_data'=>"settings_compulsory_join"],['text'=>"⛓| Settings frequent message",'callback_data'=>"settings_frequent_message"]],
-		[['text'=>"Settings character constraint |🔩",'callback_data'=>"settings_character_constraint"],['text'=>"⏳| Settings silent",'callback_data'=>"settings_silent"]],
-		[['text'=>"📋| Commands Guide",'callback_data'=>"cmd_guide"]],
-		[['text'=>"🖱| Exit |🖱",'callback_data'=>"exit"]]
-		]]);
-	}
-}
-function buttonPanelMulti($file){
-	$chat_id=chat_id();
-	$number= -1;
-	$list=array();
-	foreach($file as $key=>$value){
-		$number=$number + 1;
-		$groups=json_decode(file_get_contents('data/bot/groups.json'),true);
-		if($groups[$chat_id]!='english'){
-			$key2=textToPersian($key);
-			$list[$number]=array(array('text'=>"$value",'callback_data'=>"multi_$key"),array('text'=>"$key2",'callback_data'=>"none"));
-		}else{
-			$list[$number]=array(array('text'=>"$key",'callback_data'=>"none"),array('text'=>"$value",'callback_data'=>"multi_$key"));
-		}
-	}
-	if($groups[$chat_id]!='english'){
-		$list[]=array(array('text'=>"خانه 🏛",'callback_data'=>"managemant_group"));
-	}else{
-		$list[]=array(array('text'=>"Back 🏛",'callback_data'=>"managemant_group"));
-	}
-	return json_encode(array('resize_keyboard'=>true,'inline_keyboard'=>$list));
-}
-function buttonCompulsoryadd($oders){
-	$chat_id=chat_id();
-	$groups=json_decode(file_get_contents('data/bot/groups.json'),true);
-	if($groups[$chat_id]!='english'){
-		if($oders['compulsory_add']=='✅'){
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"$oders[compulsory_add]",'callback_data'=>"compulsory_add"],['text'=>"🔐اد اجباری",'callback_data'=>"none"]],
-			[['text'=>"$oders[statistics_compulsory_add]",'callback_data'=>"none"],['text'=>"📊آمار اد",'callback_data'=>"none"]],
-			[['text'=>"$oders[number_compulsory_add]",'callback_data'=>"none"],['text'=>"🔢تعداد اد",'callback_data'=>"none"]],
-			[['text'=>"+",'callback_data'=>"c_add+"],['text'=>"-",'callback_data'=>"c_add-"]],
-			[['text'=>"خانه 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}else{
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"$oders[compulsory_add]",'callback_data'=>"compulsory_add"],['text'=>"🔐اد اجباری",'callback_data'=>"none"]],
-			[['text'=>"$oders[statistics_compulsory_add]",'callback_data'=>"none"],['text'=>"📊آمار اد",'callback_data'=>"none"]],
-			[['text'=>"خانه 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}
-	}else{
-		if($oders['compulsory_add']=='✅'){
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"📰| Compulsory add",'callback_data'=>"none"],['text'=>"$oders[compulsory_add]",'callback_data'=>"compulsory_add"]],
-			[['text'=>"🗄| Statistics add",'callback_data'=>"none"],['text'=>"$oders[statistics_compulsory_add]",'callback_data'=>"none"]],
-			[['text'=>"📰| Number add",'callback_data'=>"none"],['text'=>"$oders[number_compulsory_add]",'callback_data'=>"none"]],
-			[['text'=>"➖",'callback_data'=>"c_add-"],['text'=>"➕",'callback_data'=>"c_add+"]],
-			[['text'=>"Back 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}else{
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"🔑| Compulsory add",'callback_data'=>"none"],['text'=>"$oders[compulsory_add]",'callback_data'=>"compulsory_add"]],
-			[['text'=>"🗄| Statistics add",'callback_data'=>"none"],['text'=>"$oders[statistics_compulsory_add]",'callback_data'=>"none"]],
-			[['text'=>"Back 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}
-	}
-}
+~ دریافت فال:
+• fal - فال
 
-function buttonCompulsoryJoin($oders){
-	$chat_id=chat_id();
-	$groups=json_decode(file_get_contents('data/bot/groups.json'),true);
-	if($groups[$chat_id]!='english'){
-		if($oders['channel_compulsory_join']=='No set'){
-			$oders['channel_compulsory_join']='تنظیم نشده';
-		}
-		return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-		[['text'=>"$oders[compulsory_join]",'callback_data'=>"compulsory_join"],['text'=>"📌عضویت اجباری",'callback_data'=>"none"]],
-		[['text'=>"$oders[channel_compulsory_join]",'callback_data'=>"none"],['text'=>"🆔کانال عضویت",'callback_data'=>"none"]],
-		[['text'=>"❌حذف کانال",'callback_data'=>"delete_channel_c_join"],['text'=>"📍تنظیم کانال",'callback_data'=>"set_channel_c_join"]],
-		[['text'=>"خانه 🏛",'callback_data'=>"managemant_group"]]
-		]]);
-	}else{
-		return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-		[['text'=>"📦| Compulsory join",'callback_data'=>"none"],['text'=>"$oders[compulsory_join]",'callback_data'=>"compulsory_join"]],
-		[['text'=>"🏷| Channel join",'callback_data'=>"none"],['text'=>"$oders[channel_compulsory_join]",'callback_data'=>"none"]],
-		[['text'=>"📮| Set channel",'callback_data'=>"set_channel_c_join"],['text'=>"Delete channel",'callback_data'=>"delete_channel_c_join"]],
-		[['text'=>"Back 🏛",'callback_data'=>"managemant_group"]]
-		]]);
-	}
-}
-function cancelCompulsoryJoin(){
-	$chatid=chat_id();
-	$groups=json_decode(file_get_contents('data/bot/groups.json'),true);
-	if($groups[$chatid]!='english'){
-		return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-		[['text'=>"لغو❌",'callback_data'=>"chancel_compulsory_join"]]
-		]]);
-	}else{
-		return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-		[['text'=>"Cancel❌",'callback_data'=>"chancel_compulsory_join"]]
-		]]);
-	}
-}
-function buttonFrequentMessage($oders){
-	$chat_id=chat_id();
-	$groups=json_decode(file_get_contents('data/bot/groups.json'),true);
-	if($groups[$chat_id]!='english'){
-		if($oders['frequent_message']=='✅'){
-			if($oders['reaction_frequent_message']=='Silent user'){
-				$oders['reaction_frequent_message']='[سکوت کاربر]';
-			}
-			elseif($oders['reaction_frequent_message']=='Kick user'){
-				$oders['reaction_frequent_message']='[اخراج کاربر]';
-			}
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"$oders[frequent_message]",'callback_data'=>"frequent_message"],['text'=>"💬پیام مکرر",'callback_data'=>"none"]],
-			[['text'=>"$oders[number_frequent_message]",'callback_data'=>"none"],['text'=>"تعداد مجاز / ثانیه",'callback_data'=>"none"]],
-			[['text'=>"-",'callback_data'=>"f_message-"],['text'=>"+",'callback_data'=>"f_message+"]],
-			[['text'=>"$oders[reaction_frequent_message]",'callback_data'=>"reaction_frequent_message"],['text'=>"واکنش",'callback_data'=>"none"]],
-			[['text'=>"خانه 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}else{
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"$oders[frequent_message]",'callback_data'=>"frequent_message"],['text'=>"💬پیام مکرر",'callback_data'=>"none"]],
-			[['text'=>"خانه 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}
-	}else{
-		if($oders['frequent_message']=='✅'){
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"✉️| Frequent message",'callback_data'=>"none"],['text'=>"$oders[frequent_message]",'callback_data'=>"frequent_message"]],
-			[['text'=>"Number authorized / second",'callback_data'=>"none"],['text'=>"$oders[number_frequent_message]",'callback_data'=>"none"]],
-			[['text'=>"➖",'callback_data'=>"f_message-"],['text'=>"➕",'callback_data'=>"f_message+"]],
-			[['text'=>"📜| Reaction",'callback_data'=>"none"],['text'=>"$oders[reaction_frequent_message]",'callback_data'=>"reaction_frequent_message"]],
-			[['text'=>"Back 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}else{
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"✉️| Frequent message",'callback_data'=>"none"],['text'=>"$oders[frequent_message]",'callback_data'=>"frequent_message"]],
-			[['text'=>"Back 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}
-	}
-}
+~ دریافت قیمت گوشی:
+• mobile - قیمت گوشی
+> مثال : قیمت گوشی Samsung
 
-function buttonCharacterConstraint($oders){
-	$chat_id=chat_id();
-	$groups=json_decode(file_get_contents('data/bot/groups.json'),true);
-	if($groups[$chat_id]!='english'){
-		if($oders['character_constraint']=='✅'){
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"$oders[character_constraint]",'callback_data'=>"character_constraint"],['text'=>"📝محدودیت کاراکتر",'callback_data'=>"none"]],
-			[['text'=>"$oders[highest_number_character_constraint]",'callback_data'=>"none"],['text'=>"📊بیشترین تعداد",'callback_data'=>"none"]],
-			[['text'=>"-10",'callback_data'=>"high_c_constraint_1-"],['text'=>"+10",'callback_data'=>"high_c_constraint_1+"]],
-			[['text'=>"-100",'callback_data'=>"high_c_constraint_2-"],['text'=>"+100",'callback_data'=>"high_c_constraint_2+"]],
-			[['text'=>"خانه 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}else{
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"$oders[character_constraint]",'callback_data'=>"character_constraint"],['text'=>"📝محدودیت کاراکتر",'callback_data'=>"none"]],
-			[['text'=>"خانه 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}
-	}else{
-		if($oders['character_constraint']=='✅'){
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"📭| Character constraint",'callback_data'=>"none"],['text'=>"$oders[character_constraint]",'callback_data'=>"character_constraint"]],
-			[['text'=>"📉| Highest number",'callback_data'=>"none"],['text'=>"$oders[highest_number_character_constraint]",'callback_data'=>"none"]],
-			[['text'=>"10",'callback_data'=>"high_c_constraint_1-"],['text'=>"➕10",'callback_data'=>"high_c_constraint_1+"]],
-			[['text'=>"100",'callback_data'=>"high_c_constraint_2-"],['text'=>"➕100",'callback_data'=>"high_c_constraint_2+"]],
-			[['text'=>"Back 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}else{
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"📭| Character constraint",'callback_data'=>"none"],['text'=>"$oders[character_constraint]",'callback_data'=>"character_constraint"]],
-			[['text'=>"Back 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}
-	}
-}
-function buttonSilent($oders){
-	$chat_id=chat_id();
-	$groups=json_decode(file_get_contents('data/bot/groups.json'),true);
-	if($oders['silent_group']=='✅'){
-		if($groups[$chat_id]!='english'){
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>$oders['silent_group'],'callback_data'=>"silent_group"],['text'=>"🔒سکوت گروه",'callback_data'=>"none"]],
-			[['text'=>$oders['silent_start'],'callback_data'=>"none"],['text'=>"⏱از ساعت",'callback_data'=>"none"]],
-			[['text'=>"-",'callback_data'=>"silent_start-"],['text'=>"+",'callback_data'=>"silent_start+"]],
-			[['text'=>$oders['silent_stop'],'callback_data'=>"none"],['text'=>"⏱تا ساعت",'callback_data'=>"none"]],
-			[['text'=>"-",'callback_data'=>"silent_stop-"],['text'=>"+",'callback_data'=>"silent_stop+"]],
-			[['text'=>"لیست سکوت",'callback_data'=>"silent_list"]],
-			[['text'=>"خانه 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}else{
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"🔒| Silent group",'callback_data'=>"none"],['text'=>$oders['silent_group'],'callback_data'=>"silent_group"]],
-			[['text'=>"⏱| Start time",'callback_data'=>"none"],['text'=>$oders['silent_start'],'callback_data'=>"none"]],
-			[['text'=>"➖",'callback_data'=>"silent_start-"],['text'=>"➕",'callback_data'=>"silent_start+"]],
-			[['text'=>"⏱| End time",'callback_data'=>"none"],['text'=>$oders['silent_stop'],'callback_data'=>"none"]],
-			[['text'=>"➖",'callback_data'=>"silent_stop-"],['text'=>"➕",'callback_data'=>"silent_stop+"]],
-			[['text'=>"🎚| Silent list |🎚",'callback_data'=>"silent_list"]],
-			[['text'=>"Back 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}
-	}else{
-		if($groups[$chat_id]!='english'){
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>$oders['silent_group'],'callback_data'=>"silent_group"],['text'=>"🔒سکوت گروه",'callback_data'=>"none"]],
-			[['text'=>"لیست سکوت",'callback_data'=>"silent_list"]],
-			[['text'=>"خانه 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}else{
-			return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"🔒| Silent group",'callback_data'=>"none"],['text'=>$oders['silent_group'],'callback_data'=>"silent_group"]],
-			[['text'=>"🎚| Silent list |🎚",'callback_data'=>"silent_list"]],
-			[['text'=>"Back 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-		}
-	}
-}
-function buttonSilentList($silent_list){
-	$number=-1;
-	$button=array();
-	foreach($silent_list as $key=>$value){
-		$number=$number+1;
-		$name=getChat($key)->result->first_name;
-		$button[$number]=array(array('text'=>"$name",'callback_data'=>"info-$key"),array('text'=>'❌','callback_data'=>"delete-$key"));
-	}
-	$chat_id=chat_id();
-	$groups=json_decode(file_get_contents('data/bot/groups.json'),true);
-	if($groups[$chat_id]!='english'){
-		$button[]=array(array('text'=>"🚦 حذف همه",'callback_data'=>"delete_all_silent"));
-		$button[]=array(array('text'=>"خانه 🏛",'callback_data'=>"settings_silent"));
-	}else{
-		$button[]=array(array('text'=>"🚦 Delete all",'callback_data'=>"delete_all_silent"));
-		$button[]=array(array('text'=>"Back 🏛",'callback_data'=>"settings_silent"));
-	}
-	return json_encode(array('resize_keyboard'=>true,'inline_keyboard'=>$button));
-}
-function buttonPanelPrivate($chat_id){
-	$list=array();
-	$members=json_decode(file_get_contents("data/bot/members.json"),true);
-	if($members[$chat_id]!='english'){
-	    $list[]=array(array('text'=>"=> راهنما <=",'callback_data'=>"hamed"));
-  $list[]=array(array('text'=>"A.R.V.I.S.A",'url' =>"https://telegram.me/ArvisaOfficial")); // لینک کانال یا گروه
-		 if($chat_id==DEVELOPER){
-			$list[]=array(array('text'=>"🎃مدیریت🎃",'callback_data'=>"managemant"));
+~ ساخت گیف با متن مورد نظر:
+• gif - گیف
 
-		}
-	}else{
-		$list[]=array(array('text'=>"Full guide 🏧",'callback_data'=>"hamed"));
-		if($chat_id==DEVELOPER){
-			$list[]=array(array('text'=>"🎃Managemant🎃",'callback_data'=>"managemant"));
-		}
-	}
-	return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>$list]);
-}
-function buttonManagemant($chat_id){
-	$groups=json_decode(file_get_contents('data/bot/groups.json'),true);
-	$members=json_decode(file_get_contents("data/bot/members.json"),true);
-	$count_groups=count($groups);
-	$count_members=count($members);
-	if($members[$chat_id]!='english'){
-		return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-		[['text'=>"$count_groups",'callback_data'=>"none"],['text'=>"تعداد گروه ها",'callback_data'=>"none"]],
-		[['text'=>"$count_members",'callback_data'=>"none"],['text'=>"تعداد اعضا",'callback_data'=>"none"]],
-		[['text'=>'فوروارد','callback_data'=>'forward'],['text'=>'فوروارد (گروه)','callback_data'=>'forward_group']],
-		[['text'=>"برگشت به منو🏛",'callback_data'=>"managemant_group_private"]]
-		]]);
-	}else{
-		return json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-		[['text'=>"Number of groups",'callback_data'=>"none"],['text'=>"$count_groups",'callback_data'=>"none"]],
-		[['text'=>"Number of members",'callback_data'=>"none"],['text'=>"$count_members",'callback_data'=>"none"]],
-		[['text'=>'Forward','callback_data'=>'forward'],['text'=>'Forward (Group)','callback_data'=>'forward_group']]
-		[['text'=>"Back to menu🔙",'callback_data'=>"managemant_group_private"]]
-		]]);
-	}
-}
+~ دریافت متن برای بیو‌گرافی:
+• bio - بیوگرافی
 
-$update=json_decode(file_get_contents('php://input'));
-$update2=json_decode(file_get_contents('php://input'),true);
-$text=$update->message->text;
-$chatid=chat_id();
-$fromid=from_id();
-$message_id=$update->message->message_id;
-$new_chat_member_id=$update->message->new_chat_member->id;
-$data=$update->callback_query->data;
-$message_id2=$update->callback_query->message->message_id;
-$tc=$update->message->chat->type;
-$tc2=$update->callback_query->message->chat->type;
-$replyid=$update->message->reply_to_message->from->id;
-$reply_name=$update->message->reply_to_message->from->first_name;
-$first_name=$update->message->from->first_name;
-$filter_cmd=filterCmd($text);
-$situation=situation($fromid);
-$situation3=situationFilters($fromid);
-$lock_list='sticker,photo,gif,video,videoselfi,voice,music,document,contact,location,game,text,link,username,hashtag,bold,italic,coding,forward,tgservice,reply,caption,bot,join';
-$groups=json_decode(file_get_contents('data/bot/groups.json'),true);
-$members=json_decode(file_get_contents("data/bot/members.json"),true);
-$settings=json_decode(file_get_contents("data/groups/$chatid/settings.json"),true);
-//================
-//================
-$oders=json_decode(file_get_contents("data/groups/$chatid/oders.json"),true);
-$number_add=json_decode(file_get_contents("data/groups/$chatid/number_add.json"),true);
-$silent_list=json_decode(file_get_contents("data/groups/$chatid/silent_list.json"),true);
-$exempt_list=json_decode(file_get_contents("data/groups/$chatid/exempt_list.json"),true);
-$spam=json_decode(file_get_contents("data/groups/$chatid/spam.json"),true);
-$status=json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=".$update->message->chat->id."&user_id=".$update->message->from->id))->result->status;
-$status2=json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=".$update->callback_query->message->chat->id."&user_id=".$update->callback_query->from->id))->result->status;
-$text_panel_fa="🤓👇 از کیبورد زیر برای فعال یا غیر فعال کردن یک گزینه استفاده کنید ";
-$text_panel_en="🤓👇 Use the keyboard to disable or enable the options";
-$text_start_fa="• با سلام 🌹
-برای استفاده از ربات لطفا مراحل زیر را به ترتیب انجام دهید :
+~ دریافت دانستنی:
+• Bilmoq - دانستنی
 
-- مرحله ی اول :
-ابتدا ربات را به گروه خود اضافه کنید ، برای این کار به قسمت اضافه کردن عضو گروه مراجعه کنید و در قسمت جستجو آیدی ربات یعنی
+~ دریافت معنی کلمات فارسی:
+• معنی
 
-` @$usernamebot `
+~ دریافت اوقات شرعی:
+• azan - اذان
 
-را وارد کنید (ایدی را کپی و جایگذاری کنید) و سپس ربات را به گروه اضافه کنید .
+~ محاسبه سن دقیق شما:
+• age - محاسبه سن
 
-- مرحله ی دوم :
-اکنون پس از اضافه کردن ربات به گروه خود میبایست ربات را در گروه ادمین کنید.
+> مثال: age 1378/11/15
 
-- مرحله ی سوم :
-پس از ادمین کردن ربات از دستور
-      `نصب`
-برای فعال سازی و نصب ربات در گروه خود استفاده کنید .";
-$text_start_en="🤓👇 Use the keyboard to disable or enable the options";
-//========================================================//
-$button_chancel_compulsory_join=cancelCompulsoryJoin();
-$re_add_bot=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-[['text'=>"Re-add robot",'url'=>"https://telegram.me/$usernamebot?startgroup=new"]],
-[['text'=>"افزودن مجدد ربات",'url'=>"https://telegram.me/$usernamebot?startgroup=new"]]
-]]);
-$button_select_lan=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-[['text'=>"شروع تنظیمات پیشرفته",'callback_data'=>"selected_persian"]],
-[['text'=>"$botnm",'url'=>"https://telegram.me/$botus?start"]],
-]]);
+~ دریافت فونت موردنظر:
+> هر دو دستور فارسی و انگلیسی مخصوص فونت انگلیسی هستند
 
-$button_select_lan1=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-[['text'=>"=> دریافت رایگان ربات <=",'callback_data'=>"selected_persian"]],
-[['text'=>"$botnm",'url'=>"https://telegram.me/$botus?start"]],
-]]);
+• font - فونت - Font
 
-//=========================================//
-if(!is_dir('data')){
-	mkdir('data');
-}
-if(!is_dir('data/bot')){
-	mkdir('data/bot');
-}
-if(!is_dir('data/groups')){
-	mkdir('data/groups');
-}
-/////////////////////////////////////////////////
-if($status2=='member' && isset($data) && $tc2!='private'){
-	if($groups[$chatid]!='english'){
-		answerCallbackQuery("شما ادمین نیستید !📋 ",true);
-	}
-	elseif($groups[$chatid]=='english'){
-		answerCallbackQuery("You are not a group admin !📋 ",true);
-	}
-	elseif($groups[$chatid]==null){
-		answerCallbackQuery("شما ادمین نیستید !📋 \n\nYou are not a group admin !📋 ",true);
-	}
-	die;
-}
-/////////////////////////////////////////////////////////////////
-if($tc=='group'){
-	sendMessage($chatid,"⚠️خطا⚠️\n\nلطفا ابتدا گروه را ب سوپر گروه تبدیل کنید و دوباره ربات را اد کنید‼️\n\n➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n⚠️Error⚠️\n\nPlease upgrade the group to the supergroup and add the robot again‼️",'HTML',$re_add_bot,$message_id);
-	leaveChat($chatid);
-}
-#delete group
-if(isset($update->message->left_chat_member) && $oders['نصب']=='✅'){
-	rmdir('data/groups/'.$chatid);
-	$id=array_search($chatid,$groups);
-	unset($groups[$id]);
-	saveJson('data/bot/groups.json',$groups);
-}
-#ok نصب
-if(($filter_cmd=='نصب' || $filter_cmd=='پیکربندی' || $filter_cmd=='نصب@$usernamebot' || $filter_cmd=='start@$usernamebot' || $filter_cmd=='add' || $filter_cmd=='افزودن') && $tc=='supergroup' && $status!='member'){
-	if($oders['نصب']!='✅'){
-		sendMessage($chatid,"ربات با موفقیت در گروه اضافه و نصب شد",'HTML',$button_select_lan,null);
-	}else{
-		if($groups[$chatid]!='english'){
-			sendMessage($chatid,'ربات قبلا در گروه شما نصب بوده است 📍','HTML',null,$message_id);
-		}else{
-			sendMessage($chatid,'📍 The robot has already been installed in your group','HTML',null,$message_id);
-		}
-		deleteMessage($chatid,$message_id);
-	}
-}
-if($data=='selected_persian' || $data=='selected_english'){
-	if($tc2=='supergroup' && $oders['نصب']!='✅'){
-		if(!is_dir("data/groups/$chatid")){
-			mkdir("data/groups/$chatid");
-		}
-		$settings=json_encode(['sticker'=>'❌','photo'=>'❌','gif'=>'❌','video'=>'❌','videoselfi'=>'❌','voice'=>'❌','music'=>'❌','document'=>'❌','contact'=>'❌','location'=>'❌','game'=>'❌','text'=>'❌','link'=>'❌','username'=>'❌','hashtag'=>'❌','bold'=>'❌','italic'=>'❌','coding'=>'❌','forward'=>'❌','tgservice'=>'❌','reply'=>'❌','caption'=>'❌','bot'=>'❌','join'=>'❌']);
-		file_put_contents("data/groups/$chatid/settings.json",$settings);
-		$oders=json_encode(['نصب'=>'✅','step'=>'none','compulsory_add'=>'❌','number_compulsory_add'=>5,'statistics_compulsory_add'=>0,'compulsory_join'=>'❌','channel_compulsory_join'=>'No set','frequent_message'=>'❌','number_frequent_message'=>5,'reaction_frequent_message'=>'Silent user','character_constraint'=>'❌','highest_number_character_constraint'=>300,'silent_group'=>'❌','silent_start'=>1,'silent_stop'=>7,'silent_ok'=>'❌']);
-		file_put_contents("data/groups/$chatid/oders.json",$oders);
-		file_put_contents("data/groups/$chatid/number_add.json","");
-		file_put_contents("data/groups/$chatid/join.json","");
-		file_put_contents("data/groups/$chatid/silent_list.json","");
-		file_put_contents("data/groups/$chatid/spam.json","");
-		file_put_contents("data/groups/$chatid/exempt_list.json","");
-		if($data=='selected_persian'){
-			$groups[$chatid]='فارسی';
-			$complete_نصب=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"🛠تنظیمات گروه🛠",'callback_data'=>"managemant_group"]],
-[['text'=>"$botnm",'url'=>"https://telegram.me/$botus?start"]],
-				[['text'=>"👥کانال ما👥",'url'=>"https://telegram.me/nulltheme_org?start"]],
-			]]); // لینک کانال شما
-			editMessageText($chatid,$message_id2,"ربات به صورت خودکار در گروه شما نصب شد
-			
-			هرچه سریع تر تنظیمات  گروه را انجام بدهید",'HTML',$complete_نصب);
-		}else{
-			$groups[$chatid]='english';
-			$complete_نصب=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"Managemant group🛠",'callback_data'=>"managemant_group"]]
-			]]);
-			editMessageText($chatid,$message_id2,"❌ The robot was automatically نصبured ",'HTML',$complete_نصب);
-		}
-		saveJson('data/bot/groups.json',$groups);
-	}
-}
-////////////////////////////////////////////////////////////////////
-if($data=='managemant_group'){
-	if($situation=='ok'){
-		if($groups[$chatid]!='english'){
-			editMessageText($chatid,$message_id2,"📍 به منوی ادمین خوش آمدید
+~ دریافت زمان:
+• time - ساعت
 
-👮 ربات را در گروه خود تنظیم کنید",'HTML',buttonPanel($groups[$chatid]),null);
-		}else{
-			editMessageText($chatid,$message_id2,"📍 Welcome to the admin menu
-			
-			✅ Use the keyboard below !",'HTML',buttonPanel($groups[$chatid]),null);
-		}
-	}
-}
-////////////////////////////////////////////////////////////////////////////
-if(strstr($filter_cmd,'delete') || strstr($filter_cmd,'حذف')){
-	if($situation=='ok'){
-		$ex=explode(' ',$filter_cmd);
-		if($ex[0]!='delete' && $ex[0]!='حذف'){
-			die;
-		}
-		$number=$ex[1];
-		$number=trim($number);
-		if($number>=1 && $number<=100){
-			for($i=$message_id; $i>=$message_id-$number; $i--){
-				deleteMessage($update->message->chat->id,$i);
-			}
-			if($groups[$chatid]!='english'){
-				sendMessage($chatid,"📮 `$number` پیام پاک شد !",'MarkDown',null,null);
-			}
-			else{
-				sendMessage($chatid,"📮 `$number` Messages deleted !",'MarkDown',null,null);
-			}
-			exit;
-		}
-		else{
-			if($groups[$chatid]!='english'){
-				sendMessage($chatid,'عدد باید بین 1 و 100 باشد !❌','MarkDown',null,null);
-			}
-			else{
-				sendMessage($chatid,'The number should be between 1 and 100 ! ❌','MarkDown',null,null);
-			}
-		}
-	}
-}
+~ ایجاد پسورد تصادفی
+• pass - پسورد
 
-if($filter_cmd=='silent' || $filter_cmd=='سکوت'){
-	if($situation=='ok'){
-		if($replyid!=null){
-			$status=json_decode(file_get_contents('https://api.telegram.org/bot'.API_KEY.'/getChatMember?chat_id='.$chatid.'&user_id='.$replyid))->result->status;
-			if($status=='member' || $status=='restricted'){
-				if(!array_key_exists($replyid,$silent_list)){
-					bot('RestrictChatMember',[
-					'chat_id'=>$chatid,
-					'user_id'=>$replyid,
-					'can_post_messages'=>false,
-					'can_add_web_page_previews'=>false,
-					'can_send_other_messages'=>false,
-					'can_send_media_messages'=>false,
-					'can_edit_messages'=>false
-					]);
-					$silent_list[$replyid]=date('Y/m/d');
-					saveJson('data/groups/'.$chatid.'/silent_list.json',$silent_list);
-					if($groups[$chatid]!='english'){
-			sendMessage($chatid,"$reply_name توانایی چت خود را از دست داد !🚀,
-",'HTML',null,$message_id);
-					}
-					else{
-						sendMessage($chatid,$reply_name.' Lost the ability to chat!🚀','HTML',null,$message_id);
-					}
-				}else{
-					if($groups[$chatid]!='english'){
-						sendMessage($chatid,$reply_name.' در لیست سکوت گروه وجود دارد ‼️','HTML',null,$message_id);
-					}
-					else{
-						sendMessage($chatid,$reply_name.' is in the group\'s silent list‼️','HTML',null,$message_id);
-					}
-				}
-			}
-			elseif($status=='creator' || $status=='administrator'){
-				if($groups[$chatid]!='english'){
-					sendMessage($chatid,'شما نمی توانید توانایی چت یک مدیر را بگیرید !❌','HTML',null,$message_id);
-				}
-				else{
-					sendMessage($chatid,'You can not get a manager\'s ability to chat!❌','HTML',null,$message_id);
-				}
-			}
-			elseif($status=='left' || $status=='kicked'){
-				if($groups[$chatid]!='english'){
-					sendMessage($chatid,'این کاربر یافت نشد !❌','HTML',null,$message_id);
-				}
-				else{
-					sendMessage($chatid,'This user not found !❌','HTML',null,$message_id);
-				}
-			}
-		}else{
-			if($groups[$chatid]!='english'){
-				sendMessage($chatid,'لطفا روی یک پیام ریپلای کنید و دستور را مجددا ارسال کنید‼️','HTML',null,$message_id);
-			}
-			else{
-				sendMessage($chatid,'Please reply to a message and send command try again‼️','HTML',null,$message_id);
-			}
-		}
-	}
-}
-//////===============================================================//////////
-if($filter_cmd=='unsilent' || $filter_cmd=='لغو سکوت'){
-	if($situation=='ok'){
-		if($replyid!=null){
-			if(array_key_exists($replyid,$silent_list)){
-				bot('RestrictChatMember',[
-				'chat_id'=>$chatid,
-				'user_id'=>$replyid,
-				'can_post_messages'=>true,
-				'can_add_web_page_previews'=>true,
-				'can_send_other_messages'=>true,
-				'can_send_media_messages'=>true,
-				'can_edit_messages'=>true
-				]);
-				$e=array_search($replyid,$silent_list);
-				unset($silent_list[$e]);
-				saveJson('data/groups/'.$chatid.'/silent_list.json',$silent_list);
-				if($groups[$chatid]!='english'){
-					sendMessage($chatid,$reply_name.' توانایی چت خود را از بدست آورد !🚀','HTML',null,$message_id);
-				}
-				else{
-					sendMessage($chatid,$reply_name.' Ability to get your chat!🚀','HTML',null,$message_id);
-				}
-			}
-		}else{
-			if($groups[$chatid]!='english'){
-				sendMessage($chatid,'لطفا روی یک پیام ریپلای کنید و دستور را مجددا ارسال کنید‼️','HTML',null,$message_id);
-			}
-			else{
-				sendMessage($chatid,'Please reply to a message and send command try again‼️','HTML',null,$message_id);
-			}
-		}
-	}
-}
+~ جوک خنده دار و تصادفی
+• jok - جوک
 
-//===================================================================//
-if($filter_cmd=='معاف' || $filter_cmd=='exempt'){
-	if($situation=='ok'){
-		if($replyid!=null){
-			$status=json_decode(file_get_contents('https://api.telegram.org/bot'.API_KEY.'/getChatMember?chat_id='.$chatid.'&user_id='.$replyid))->result->status;
-			if($status=='member' || $status=='restricted'){
-				if(!in_array($replyid,$exempt_list)){
-					$exempt_list[]=$replyid;
-					saveJson('data/groups/'.$chatid.'/exempt_list.json',$exempt_list);
-					$name=getChat($replyid)->result->first_name;
-					if($groups[$chatid]!='english'){
-						sendMessage($chatid,"کاربر $name از افزودن اجباری عضو معاف شد🚀",'HTML',null,$message_id);
-					}
-					else{
-						sendMessage($chatid,"$name user was exempted from adding a member🚀",'HTML',null,$message_id);
-					}
-				}else{
-					if($groups[$chatid]!='english'){
-						sendMessage($chatid,'این کاربر از 🔑| اد اجباری معاف شده است‼️','HTML',null,$message_id);
-					}
-					else{
-						sendMessage($chatid,'This user is exempted from the adding a member️','HTML',null,$message_id);
-					}
-				}
-			}
-			elseif($status=='creator' || $status=='administrator'){
-					if($groups[$chatid]!='english'){
-						sendMessage($chatid,'شما نمی توانید یک مدیر را از 🔑| اد اجباری معاف کنید‼️','HTML',null,$message_id);
-					}
-					else{
-						sendMessage($chatid,'You can not exempt a manager from compulsory add‼️','HTML',null,$message_id);
-					}
-				}
-				elseif($status=='left' || $status=='kicked'){
-					if($groups[$chatid]!='english'){
-						sendMessage($chatid,'این کاربر یافت نشد !❌','HTML',null,$message_id);
-					}
-					else{
-						sendMessage($chatid,'This user not found !❌','HTML',null,$message_id);
-					}
-				}
-		}else{
-			if($groups[$chatid]!='english'){
-				sendMessage($chatid,'لطفا روی یک پیام ریپلای کنید و دستور را مجددا ارسال کنید‼️','HTML',null,$message_id);
-			}
-			else{
-				sendMessage($chatid,'Please reply to a message and send command try again‼️','HTML',null,$message_id);
-			}
-		}
-	}
-}
-include 'data/groups/index.php';
-//===================================================================//
-if($filter_cmd=='اجبار' || $filter_cmd=='compulsor'){
-	if($situation=='ok'){
-		if($replyid!=null){
-			if(in_array($replyid,$exempt_list)){
-				$id=array_search($replyid,$exempt_list);
-				unset($exempt_list[$id]);
-				saveJson('data/groups/'.$chatid.'/exempt_list.json',$exempt_list);
-				$name=getChat($replyid)->result->first_name;
-				if($groups[$chatid]!='english'){
-					sendMessage($chatid,"کاربر $name از معافیت افزودن اجباری حذف شد🚀",'HTML',null,$message_id);
-				}
-				else{
-					sendMessage($chatid,"The $name user has been removed from the forced add-ons exemption🚀",'HTML',null,$message_id);
-				}
-			}
-		}else{
-			if($groups[$chatid]!='english'){
-				sendMessage($chatid,'لطفا روی یک پیام ریپلای کنید و دستور را مجددا ارسال کنید‼️','HTML',null,$message_id);
-			}
-			else{
-				sendMessage($chatid,'Please reply to a message and send command try again‼️','HTML',null,$message_id);
-			}
-		}
-	}
-}
-//=================================================================//
-if(isset($text)){
-	if($situation=='ok'){
-		$lock=explode(' ',$text);
-		$lock1=filterCmd($lock[0]);
-		$lock2=filterCmd($lock[1]);
-		if(!preg_match('/^[Aa-Zz]/',$lock2)){
-			$lock_2=textToEnglish($lock2);
-		}
-		if($lock_2!=null){
-			$file=$settings[$lock_2];
-		}else{
-			$file=$settings[$lock2];
-		}
-		if($lock1=='lock' || $lock1=='unlock' || $lock1=='قفل' || $lock1=='بازکردن'){
-			if(strstr($lock_list,$lock2)!=false || strstr($lock_list,$lock_2)!=false){
-				if($lock1=='lock' || $lock1=='قفل'){
-					if($file=='❌'){
-						if($lock_2!=null){
-							$settings[$lock_2]='✅';
-						}else{
-							$settings[$lock2]='✅';
-						}
-						saveJson("data/groups/$chatid/settings.json",$settings);
-						if($groups[$chatid]!='english'){
-							if($lock_2!=null){
-								sendMessage($chatid,"🚀قفل ارسال $lock2 توسط اعضا , فعال شد !\n\nخب , اعضای گروه نمیتوانند $lock2 را در گروه ارسال کنند !🚨",'HTML',null,$message_id);
-							}else{
-								$lock2=textToPersian($lock2);
-								sendMessage($chatid,"🚀قفل ارسال $lock2 توسط اعضا , فعال شد !\n\nخب , اعضای گروه نمیتوانند $lock2 را در گروه ارسال کنند !🚨",'HTML',null,$message_id);
-							}
-						}else{
-							if($lock_2!=null){
-								sendMessage($chatid,"🚀Lock send $lock_2 by members , was enabled !\n\nSo, group members cannot send ".$lock_2."s to the group !🚨",'HTML',null,$message_id);
-							}else{
-								sendMessage($chatid,"🚀Lock send $lock2 by members , was enabled !\n\nSo, group members cannot send ".$lock2."s to the group !🚨",'HTML',null,$message_id);
-							}
-						}
-					}else{
-						if($groups[$chatid]!='english'){
-							if($lock_2!=null){
-								sendMessage($chatid,"⚠️قفل ارسال $lock2 توسط اعضا , فعال بوده است !",'HTML',null,$message_id);
-							}else{
-								$lock2=textToPersian($lock2);
-								sendMessage($chatid,"⚠️قفل ارسال $lock2 توسط اعضا , فعال بوده است !",'HTML',null,$message_id);
-							}
-						}else{
-							if($lock_2!=null){
-								sendMessage($chatid,"⚠️Lock send $lock_2 by members, already enabled !",'HTML',null,$message_id);
-							}else{
-								sendMessage($chatid,"⚠️Lock send $lock2 by members, already enabled !",'HTML',null,$message_id);
-							}
-						}
-					}
-				}
-				elseif($lock1=='unlock' || $lock1=='بازکردن'){
-					if($file=='✅'){
-						if($lock_2!=null){
-							$settings[$lock_2]='❌';
-						}else{
-							$settings[$lock2]='❌';
-						}
-						saveJson("data/groups/$chatid/settings.json",$settings);
-						if($groups[$chatid]!='english'){
-							if($lock_2!=null){
-								sendMessage($chatid,"🚀قفل ارسال $lock2 توسط اعضا , غیر فعال شد !\n\nخب , اعضای گروه می توانند $lock2 را در گروه ارسال کنند !🎃",'HTML',null,$message_id);
-							}else{
-								$lock2=textToPersian($lock2);
-								sendMessage($chatid,"🚀قفل ارسال $lock2 توسط اعضا , غیر فعال شد !\n\nخب , اعضای گروه می توانند $lock2 را در گروه ارسال کنند !🎃",'HTML',null,$message_id);
-							}
-						}else{
-							if($lock_2!=null){
-								sendMessage($chatid,"🚀Lock send $lock_2 by members , was disabled !\n\nSo, group members can send ".$lock_2."s to the group !🎃",'HTML',null,$message_id);
-							}else{
-								sendMessage($chatid,"🚀Lock send $lock2 by members , was disabled !\n\nSo, group members can send ".$lock2."s to the group !🎃",'HTML',null,$message_id);
-							}
-						}
-					}else{
-						if($groups[$chatid]!='english'){
-							if($lock_2!=null){
-								sendMessage($chatid,"⚠️قفل ارسال $lock2 توسط اعضا , غیر فعال بوده است !",'HTML',null,$message_id);
-							}else{
-								$lock2=textToPersian($lock2);
-								sendMessage($chatid,"⚠️قفل ارسال $lock2 توسط اعضا , غیر فعال بوده است !",'HTML',null,$message_id);
-							}
-						}else{
-							if($lock_2!=null){
-								sendMessage($chatid,"⚠️Lock send $lock_2 by members, already disabled !",'HTML',null,$message_id);
-							}else{
-								sendMessage($chatid,"⚠️Lock send $lock2 by members, already disabled !",'HTML',null,$message_id);
-							}
-						}
-					}
-				}
-			}else{
-				if($groups[$chatid]!='english'){
-					sendMessage($chatid,"❌این قفل وجود ندارد !",'HTML',null,$message_id);
-				}else{
-					sendMessage($chatid,"❌This lock does not exist !",'HTML',null,$message_id);
-				}
-			}
-		}
-	}
-}
+~ الکی مثلا همه چیش الکیه
+• fake - الکی مثلا
 
-//=====================================================//
-if(isset($text)){
-	if($situation=='ok'){
-		if(!preg_match('/^[Aa-Zz]/',$filter_cmd)){
-			$filter_cmd2=textToEnglish($filter_cmd);
-		}
-		$lock_list=explode(',',$lock_list);
-		if(in_array($filter_cmd,$lock_list) || in_array($filter_cmd2,$lock_list)){
-			if($groups[$chatid]!='english'){
-				if($filter_cmd2!=null){
-					$button_panel_one=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-				[['text'=>"$botnm",'url'=>"https://telegram.me/$botus?start"]],
-					]]);
-				}else{
-					$filter_cmd2=textToPersian($filter_cmd);
-					$button_panel_one=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-				[['text'=>"$botnm",'url'=>"https://telegram.me/$botus?start"]],
-					]]);
-				}
-		
+~ ساخت لوگو با نام شما
+• /photo متن شما
+> مثال :
+/photo Hossein
+",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+[['text'=> "🏛 منوی اصلی️", 'callback_data'=>"back_g"]],
+              ]])
+        ]);}else{
+bot('answercallbackquery', [
+        'callback_query_id' => $update->callback_query->id,
+        'text' => "🤨 شما ادمین گروه نیستید!",
+        'show_alert' => false
+    ]);}}
+//=== dev : @virtualdev ===\\
+if($tc == "supergroup" or $tc == "group" ){
+$all_gaps2 = explode("\n",$all_gaps); 
+if(!in_array($chat_id,$all_gaps2)){
+$tctctct = fopen("data/allgap.txt", "a") or die("Unable to open file!");
+fwrite($tctctct, "\n$chat_id");
+fclose($tctctct);
+bot('sendMessage',[
+  'chat_id' =>$chat_id,
+  'text' => "🔅 ربات $name_bot نصب شد!
 
-	sendMessage($chatid,"
+📚 <b>ابتدا ربات را ادمین گروه کرده و سپس کلمه پنل را ارسال کنید!</b>
 
-				$rdonline
-				
-				",'HTML',$button_panel_one,$message_id);
-			}else{
-				if($filter_cmd2!=null){
-					$button_panel_one=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-						[['text'=>"$botnm",'url'=>"https://telegram.me/$botus?start"]],
-					]]);
-				}else{
-					$button_panel_one=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-					[['text'=>"$botnm",'url'=>"https://telegram.me/$botus?start"]],
-					]]);
-				}
-				sendMessage($chatid,$text_panel_en,'HTML',$button_panel_one,$message_id);
-			}
-		}
-	}
-}
-//////==============================================//
-if(strstr($data,'one_')!=false){
-	if($situation=='ok'){
-		$lock=str_replace('one_','',$data);
-		if($settings[$lock]=='✅'){
-			$settings[$lock]='❌';
-		}else{
-			$settings[$lock]='✅';
-		}
-		saveJson("data/groups/$chatid/settings.json",$settings);
-		if($groups[$chatid]!='english'){
-			$lock2=textToPersian($lock);
-			$button_panel_one=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"⬇️ $lock2 ⬇️",'callback_data'=>"none"]],
-			[['text'=>"$settings[$lock]",'callback_data'=>"one_$lock"],['text'=>"حذف پست",'callback_data'=>"none"]],
-			[['text'=>"Exit",'callback_data'=>"exit"]]
-			]]);
-		}else{
-			$button_panel_one=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"⬇️ $lock ⬇️",'callback_data'=>"none"]],
-			[['text'=>"Delete Post",'callback_data'=>"none"],['text'=>"$settings[$lock]",'callback_data'=>"one_$lock"]],
-			[['text'=>"Exit",'callback_data'=>"exit"]]
-			]]);
-		}
-		editMessageReplyMarkup($chatid,$message_id2,$button_panel_one);
-	}
-}
-//============================================================//
-if($filter_cmd=='panel' || $filter_cmd=='panel@$usernamebot' || $filter_cmd=='پنل' || $filter_cmd=='مدیریت'){
-	if($situation=='ok'){
-		if($groups[$chatid]!='english'){
-			sendMessage($chatid,"🍿 به منوی ادمین خوش آمدید
-			
-			از کیبورد زیر استفاده کنید !☘️",'HTML',buttonPanel($groups[$chatid]),$message_id);
-		}else{
-			sendMessage($chatid,"Welcome to the admin menu 🍿
-			
-			Use the keyboard below !☘️",'HTML',buttonPanel($groups[$chatid]),$message_id);
-		}
-	}
-}
-//======================================================//
-if($data=='settings_group' || $data=='settings_compulsory_add' || $data=='settings_compulsory_join' || $data=='settings_frequent_message' || $data=='settings_character_constraint' || $data=='settings_silent'){
-	if($situation=='ok'){
-		switch($data){
-			case 'settings_group';
-			$button=buttonPanelMulti($settings);
-			break;
-			case 'settings_compulsory_add';
-			$button=buttonCompulsoryadd($oders);
-			break;
-			case 'settings_compulsory_join';
-			$button=buttonCompulsoryJoin($oders);
-			break;
-			case 'settings_frequent_message';
-			$button=buttonFrequentMessage($oders);
-			break;
-			case 'settings_character_constraint';
-			$button=buttonCharacterConstraint($oders);
-			break;
-			case 'settings_silent';
-			$button=buttonSilent($oders);
-		}
-		if($groups[$chatid]!='english'){
-			editMessageText($chatid,$message_id2,$text_panel_fa,'HTML',$button);
-		}else{
-			editMessageText($chatid,$message_id2,$text_panel_en,'HTML',$button);
-		}
-	}
-}
-//=================================================//
-if($data=='compulsory_add' || $data=='frequent_message' || $data=='character_constraint'){
-	if($situation=='ok'){
-		if($oders[$data]=='✅'){
-			$oders[$data]='❌';
-		}else{
-			$oders[$data]='✅';
-		}
-		switch($data){
-			case 'compulsory_add';
-			$button=buttonCompulsoryadd($oders);
-			break;
-			case 'frequent_message';
-			$button=buttonFrequentMessage($oders);
-			break;
-			case 'character_constraint';
-			$button=buttonCharacterConstraint($oders);
-		}
-		saveJson("data/groups/$chatid/oders.json",$oders);
-		editMessageReplyMarkup($chatid,$message_id2,$button);
-	}
-}
-///=================================================///
-if(strstr($data,'multi_')!=false){
-	if($situation=='ok'){
-		$lock=str_replace('multi_','',$data);
-		if($settings[$lock]=='✅'){
-			$settings[$lock]='❌';
-		}else{
-			$settings[$lock]='✅';
-		}
-		saveJson("data/groups/$chatid/settings.json",$settings);
-		editMessageReplyMarkup($chatid,$message_id2,buttonPanelMulti($settings));
-	}
-}
-//=========================================================//
-if(strstr($data,'c_add')!=false){
-	if($situation=='ok'){
-		$position=str_replace('c_add','',$data);
-		if($position=='+'){
-			$new_number=$oders['number_compulsory_add'] + 1;
-		}else{
-			$new_number=$oders['number_compulsory_add'] - 1;
-		}
-		$oders['number_compulsory_add']=$new_number;
-		if($new_number >= 1 && $new_number <= 10){
-			saveJson("data/groups/$chatid/oders.json",$oders);
-			editMessageReplyMarkup($chatid,$message_id2,buttonCompulsoryadd($oders));
-		}
-	}
-}
-///=============================================//
-if($data=='compulsory_join'){
-	if($situation=='ok'){
-		if($oders['compulsory_join']=='✅'){
-			$oders['compulsory_join']='❌';
-		}else{
-			if($oders['channel_compulsory_join']!='No set'){
-				$oders['compulsory_join']='✅';
-			}else{
-				if($groups[$chatid]!='english'){
-					answerCallbackQuery("📋 برای اینکه بتوانید این گزینه را تغییر دهید، ابتدا باید کانال خود را برای عضویت اجباری تنظیم کنید
+⚠️ <b>تا زمانی که ادمین گروه نباشم نمیتوانم فعالیتی انجام دهم!</b>",
+ 'parse_mode'=>"HTML",
+]);
+bot('sendMessage',[
+            'chat_id' =>$admins[0],
+'text' => "⚜ گروه `$chat_id` به ربات اضافه شد!",
+ 'parse_mode'=>"MarkDown",
+]);}
+if($text && file_exists("data/kalamat/$text.txt")){
+$file = file_get_contents("data/kalamat/$text.txt");
+$ex = explode("\n",$file);
+$jrand = $ex[rand(0, count($ex)-1)];
+bot('sendMessage',[
+    'chat_id' =>$chat_id,
+    'text' =>$jrand,
+'reply_to_message_id'=>$message_id,
+]);}
+//===. dev : @virtualdev ===\\
+if(preg_match('/^[!\/#]?(mobile|قیمت گوشی) (.*)$/i',$text,$match)){
+$get = file_get_contents("http://alpha-soft.ir/MobilePrice/v2/ShowPrice.php?Source=emalls&Model=".$match[2]);
+$result = json_decode($get, true);
+if(count($result['result']) > 1){
+foreach($result['result'] as $key => $value){
+$model = $value['Model'];
+$price = $value['Price'];
+$photo = $value['PIC'];
+if(strlen($string) < 4000){
+$string .= "📱 مدل دقیق : $model\n🛍 قیمت : $price\n\n\n";
+}else{
+$string1 .= "📱 مدل دقیق : $model\n🛍 قیمت : $price\n\n\n";}}
+bot('sendmessage',[
+'chat_id'=>$chat_id,
+'text'=>"💻 قیمت روز گوشی های ".$match[2]." :\n$string", 'parse_mode'=>'MarkDown','reply_to_message_id'=>$message_id]);
+}else{
+bot('sendmessage',[
+'chat_id'=>$chat_id,
+'text'=>"🕹 یافت نشد!", 'parse_mode'=>'MarkDown','reply_to_message_id'=>$message_id]);}}
+//===. dev : @virtualdev. ===\\
+elseif($text =="بیوگرافی" or $text == "bio"){
+$bio = file_get_contents("https://api.codebazan.ir/bio/");
+bot('sendMessage',[
+'chat_id'=>$chat_id,
+'text'=>"❡ متن بیوگرافی ⇩
+ 
+$bio
 
-⭐️ دقت کرده ربات باید در کانال ادمین باشد",true);
-				}else{
-					answerCallbackQuery("⭐️ To be able to change this option, you must first set up your channel for compulsory join !",true);
-				}
-			}
-		}
-		saveJson("data/groups/$chatid/oders.json",$oders);
-		editMessageReplyMarkup($chatid,$message_id2,buttonCompulsoryJoin($oders));
-	}
-}
-//=======================================================//
-if($data=='set_channel_c_join'){
-	if($situation=='ok'){
-		$oders['step']='set_channel_c_join';
-		saveJson("data/groups/$chatid/oders.json",$oders);
-		if($groups[$chatid]!='english'){
-			editMessageText($chatid,$message_id2,"📍 لطفا نام کاربری کانال خود را ارسال کنید.\n\nنام کاربری کانال باید با @ آغاز شود ",'HTML',$button_chancel_compulsory_join);
-		}else{
-			editMessageText($chatid,$message_id2,"📍 Please submit your channel username.\n\nChannel username must be started with @",'HTML',$button_chancel_compulsory_join);
-		}
-	}
-}
+برای کپی شدن متن بیو آن را لمس کنید !",
+'reply_to_message_id'=>$message_id,
+'parse_mode'=>'MarkDown',
+'reply_markup'=>$or,
+]);}
+elseif($text =="اذان" or $text == "azan"){
+$text = file_get_contents("https://prayer.aviny.com/api/prayertimes/1");
+$getchat = json_decode($text, true);
+$city = $getchat["CityName"];
+$sobeh = $getchat["Imsaak"];
+$toloe = $getchat["Sunrise"];  
+$zoher = $getchat["Noon"]; 
+$qurob = $getchat["Sunset"]; 
+$maghreb = $getchat["Maghreb"]; 
+$nime = $getchat["Midnight"]; 
+$rmroz = $getchat["Today"];
+bot('sendMessage',[
+'chat_id'=>$chat_id,
+'text'=>"🕋 اوقات شرعی $city :
+ 
+⿻ اذان صبح : $sobeh
+⿻ طلوع افتاب : $toloe
+⿻ اذان ظهر : $zoher
+⿻ غروب افتاب : $qurob
+⿻ اذان مغرب : $maghreb
+⿻ نیمه شب : $nime
 
-//===================================================//
-if(isset($text) && $oders['step']=='set_channel_c_join'){
-	if($situation=='ok'){
-		if(substr($text,0,1)=='@'){
-			$substr=substr($text,1,2);
-			if(preg_match('/^[A-Z]|[a-z]|[0-9]|_/',$text) && strstr($text,' ')==false && !preg_match('/^[0-9]|_/',$substr) && strlen($text) >= 6){
-				$oders['step']='none';
-				$oders['channel_compulsory_join']=$text;
-				saveJson("data/groups/$chatid/oders.json",$oders);
-				if($groups[$chatid]!='english'){
-					sendMessage($chatid,"📍 کانال شما با موفقیت تنظیم شد !",'HTML',buttonCompulsoryJoin($oders),$message_id);
-				}else{
-					sendMessage($chatid,"📍 Your channel successfully set !",'HTML',buttonCompulsoryJoin($oders),$message_id);
-				}
-			}else{
-				if($groups[$chatid]!='english'){
-					sendMessage($chatid,"📍 این نام کاربری معتبر نیست!\nلطفا نام کاربری خود را با دقت بیشتری ارسال کنید ️",'HTML',$button_chancel_compulsory_join,$message_id);
-				}else{
-					sendMessage($chatid,"📍 This username is not valid !\nPlease send your channel more username carefully ",'HTML',$button_chancel_compulsory_join,$message_id);
-				}
-			}
-		}else{
-			if($groups[$chatid]!='english'){
-				sendMessage($chatid,"📍 یوزرنیم کانال باید با @ شروع شود !",'HTML',$button_chancel_compulsory_join,$message_id);
-			}else{
-				sendMessage($chatid,"📍 Username Channel must start with @ !",'HTML',$button_chancel_compulsory_join,$message_id);
-			}
-		}
-	}
-}
-///=====================================================//
-if($data=='delete_channel_c_join'){
-	if($situation=='ok'){
-		if($oders['channel_compulsory_join']!='No set'){
-			if($groups[$chatid]!='english'){
-				$button_sure_compulsory_join=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-				[['text'=>"بله, من مطمئعنم",'callback_data'=>"sure_channel_c_join"]],
-				[['text'=>"لغو",'callback_data'=>"chancel_compulsory_join"]]
-				]]);
-				editMessageText($chatid,$message_id2,"📍 مطمئنید که میخواهید کانال را حذف کنید?",'HTML',$button_sure_compulsory_join);
-			}else{
-				$button_sure_compulsory_join=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-				[['text'=>"Yes, I sure ",'callback_data'=>"sure_channel_c_join"]],
-				[['text'=>"Cancel",'callback_data'=>"chancel_compulsory_join"]]
-				]]);
-				editMessageText($chatid,$message_id2,"📍 Are you sure you want to delete the channel?",'HTML',$button_sure_compulsory_join);
-			}
-		}else{
-			if($groups[$chatid]!='english'){
-				answerCallbackQuery("📍 شما هیچ کانالی تنظیم نکرده اید !",true);
-			}else{
-				answerCallbackQuery("📍 You have not set any channel !",true);
-			}
-		}
-	}
-}
-if($data=='sure_channel_c_join'){
-	if($situation=='ok'){
-		$oders['channel_compulsory_join']='No set';
-		$oders['compulsory_join']='❌';
-		saveJson("data/groups/$chatid/oders.json",$oders);
-		if($groups[$chatid]!='english'){
-			answerCallbackQuery("😕 کانال تنظیم شده حذف شد !",true);
-		}else{
-			answerCallbackQuery("😕 The tuned channel has been deleted !",true);
-		}
-		if($groups[$chatid]!='english'){
-			editMessageText($chatid,$message_id2,$text_panel_fa,'HTML',buttonCompulsoryJoin($oders));
-		}else{
-			editMessageText($chatid,$message_id2,$text_panel_en,'HTML',buttonCompulsoryJoin($oders));
-		}
-	}
-}
-//======================================================//
-if($data=='chancel_compulsory_join'){
-	if($situation=='ok'){
-		if($oders['step']!='none'){
-			$oders['step']='none';
-			saveJson("data/groups/$chatid/oders.json",$oders);
-		}
-		if($groups[$chatid]!='english'){
-			editMessageText($chatid,$message_id2,$text_panel_fa,'HTML',buttonCompulsoryJoin($oders));
-		}else{
-			editMessageText($chatid,$message_id2,$text_panel_en,'HTML',buttonCompulsoryJoin($oders));
-		}
-	}
-}
+● تاریخ امروز : $rmroz",
+'reply_to_message_id'=>$message_id,
+'parse_mode'=>'MarkDown',
+'reply_markup'=>$or,
+]);}
+//----------//////-----------
+if(preg_match('/^[!\/#]?(age|محاسبه سن) (\d+)\/(\d+)\/(\d+)$/i',$text,$match)){
+$get = file_get_contents("http://api.novateamco.ir/age/?year=".$match[2]."&month=".$match[3]."&day=".$match[4]);
+if($match[2] < 1000 or $match[3] >= 13 or $match[4] >= 32 or $match[2] >= 1400){
+  bot('sendmessage',[
+    'chat_id'=>$chat_id,
+    'text'=>"لطفا ابتدا از صحت فرمت وارد شده اطمینان حاصل کنید و مجددا امتحان کنید !",'reply_to_message_id'=>$message_id,]);
+}else{
+$result = json_decode($get, true);
+if($result['ok'] === true){
+ bot('sendmessage',[
+    'chat_id'=>$chat_id,
+    'text'=>"⚖️ محاسبه سن انجام شد !
+🌏 کل روز های سپری شده : ".$result['other']['days']."\n🤤 حیوان سال شما : ".$result['other']['year_name']."\n🦅 روز های مانده به تولد بعدی شما : ".$result['other']['to_birth']."\n\n• Ch : @$channel", 'MarkDown','reply_to_message_id'=>$message_id]);}}}
+//=== dev : @virtualdev ===\\
+if(preg_match('/^(font|Font|فونت) (.*)/s', $text, $mtch)){
+$matn = strtoupper("$mtch[2]");
+$Eng = ['Q','W','E','R','T','Y','U','I','O','P','A','S','D','F','G','H','J','K','L','Z','X','C','V','B','N','M'];
+$Font_0 = ['𝐐','𝐖','𝐄','𝐑','𝐓','𝐘','𝐔','𝐈','𝐎','𝐏','𝐀','𝐒','𝐃','𝐅','𝐆','𝐇','𝐉','𝐊','𝐋','𝐙','𝐗','𝐂','𝐕','𝐁','𝐍','𝐌'];
+$Font_1 = ['𝑸','𝑾','𝑬','𝑹','𝑻','𝒀','𝑼','𝑰','𝑶','𝑷','𝑨','𝑺','𝑫','𝑭','𝑮','𝑯','𝑱','𝑲','𝑳','𝒁','𝑿','𝑪','𝑽','𝑩','𝑵','𝑴'];
+$Font_2 = ['𝑄','𝑊','𝐸','𝑅','𝑇','𝑌','𝑈','𝐼','𝑂','𝑃','𝐴','𝑆','𝐷','𝐹','𝐺','𝐻','𝐽','𝐾','𝐿','𝑍','𝑋','𝐶','𝑉','𝐵','𝑁','𝑀'];
+$Font_3 = ['𝗤','𝗪','𝗘','𝗥','𝗧','𝗬','𝗨','𝗜','𝗢','𝗣','𝗔','𝗦','𝗗','𝗙','𝗚','𝗛','𝗝','𝗞','𝗟','𝗭','𝗫','𝗖','𝗩','𝗕','𝗡','𝗠'];
+$Font_4 = ['𝖰','𝖶','𝖤','𝖱','𝖳','𝖸','𝖴','𝖨','𝖮','𝖯','𝖠','𝖲','𝖣','𝖥','𝖦','𝖧','𝖩','𝖪','𝖫','𝖹','𝖷','𝖢','𝖵','𝖡','𝖭','𝖬'];
+$Font_5 = ['𝕼','𝖂','𝕰','𝕽','𝕵','𝚼','𝖀','𝕿','𝕺','𝕻','𝕬','𝕾','𝕯','𝕱','𝕲','𝕳','𝕴','𝕶','𝕷','𝖅','𝖃','𝕮','𝖁','𝕭','𝕹','𝕸'];
+$Font_6 = ['𝔔','𝔚','𝔈','ℜ','𝔍','ϒ','𝔘','𝔗','𝔒','𝔓','𝔄','𝔖','𝔇','𝔉','𝔊','ℌ','ℑ','𝔎','𝔏','ℨ','𝔛','ℭ','𝔙','𝔅','𝔑','𝔐'];
+$Font_7 = ['𝙌','𝙒','𝙀','𝙍','𝙏','𝙔','𝙐','𝙄','𝙊','𝙋','𝘼','𝙎','𝘿','𝙁','𝙂','𝙃','𝙅','𝙆','𝙇','𝙕','𝙓','𝘾','𝙑','𝘽','𝙉','𝙈'];
+$Font_8 = ['𝘘','𝘞','𝘌','𝘙','𝘛','𝘠','𝘜','𝘐','𝘖','𝘗','𝘈','𝘚','𝘋','𝘍','𝘎','𝘏','𝘑','𝘒','𝘓','𝘡','𝘟','𝘊','𝘝','𝘉','𝘕','𝘔'];
+$Font_9 = ['Q̶̶','W̶̶','E̶̶','R̶̶','T̶̶','Y̶̶','U̶̶','I̶̶','O̶̶','P̶̶','A̶̶','S̶̶','D̶̶','F̶̶','G̶̶','H̶̶','J̶̶','K̶̶','L̶̶','Z̶̶','X̶̶','C̶̶','V̶̶','B̶̶','N̶̶','M̶̶'];
+$Font_10 = ['Q̷̷̶̶','W̷̷̶̶','E̷̷̶̶','R̷̷̶̶','T̷̷̶̶','Y̷̷̶̶','U̷̷̶̶','I̷̷̶̶','O̷̷̶̶','P̷̷̶̶','A̷̷̶̶','S̷̷̶̶','D̷̷̶̶','F̷̷̶̶','G̷̷̶̶','H̷̷̶̶','J̷̷̶̶','K̷̷̶̶','L̷̷̶̶','Z̷̷̶̶','X̷̷̶̶','C̷̷̶̶','V̷̷̶̶','B̷̷̶̶','N̷̷̶̶','M̷̷̶̶'];
+$Font_11 = ['Q͟͟','W͟͟','E͟͟','R͟͟','T͟͟','Y͟͟','U͟͟','I͟͟','O͟͟','P͟͟','A͟͟','S͟͟','D͟͟','F͟͟','G͟͟','H͟͟','J͟͟','K͟͟','L͟͟','Z͟͟','X͟͟','C͟͟','V͟͟','B͟͟','N͟͟','M͟͟'];
+$Font_12 = ['Q͇͇','W͇͇','E͇͇','R͇͇','T͇͇','Y͇͇','U͇͇','I͇͇','O͇͇','P͇͇','A͇͇','S͇͇','D͇͇','F͇͇','G͇͇','H͇͇','J͇͇','K͇͇','L͇͇','Z͇͇','X͇͇','C͇͇','V͇͇','B͇͇','N͇͇','M͇͇'];
+$Font_13 = ['Q̤̤','W̤̤','E̤̤','R̤̤','T̤̤','Y̤̤','Ṳ̤','I̤̤','O̤̤','P̤̤','A̤̤','S̤̤','D̤̤','F̤̤','G̤̤','H̤̤','J̤̤','K̤̤','L̤̤','Z̤̤','X̤̤','C̤̤','V̤̤','B̤̤','N̤̤','M̤̤'];
+$Font_14 = ['Q̰̰','W̰̰','Ḛ̰','R̰̰','T̰̰','Y̰̰','Ṵ̰','Ḭ̰','O̰̰','P̰̰','A̰̰','S̰̰','D̰̰','F̰̰','G̰̰','H̰̰','J̰̰','K̰̰','L̰̰','Z̰̰','X̰̰','C̰̰','V̰̰','B̰̰','N̰̰','M̰̰'];
+$Font_15 = ['디','山','乇','尺','亇','丫','凵','工','口','ㄗ','闩','丂','刀','下','彑','⼶','亅','片','乚','乙','乂','亡','ム','乃','力','从'];
+$Font_16= ['ዓ','ሠ','ይ','ዩ','ፐ','ሃ','ሀ','ፗ','ዐ','የ','ል','ና','ሏ','ፑ','ፘ','ዘ','ጋ','ኸ','ረ','ጓ','ጰ','ር','ህ','ፎ','በ','ጠ'];
+$Font_17= ['Ꭷ','Ꮃ','Ꭼ','Ꮢ','Ꭲ','Ꭹ','Ꮜ','Ꮖ','Ꮻ','Ꮲ','Ꭺ','Ꮪ','Ꭰ','Ꮀ','Ꮐ','Ꮋ','Ꭻ','Ꮶ','Ꮮ','Ꮓ','Ꮱ','Ꮯ','Ꮩ','Ᏼ','N','Ꮇ'];
+$Font_18= ['Ǫ','Ѡ','Σ','Ʀ','Ϯ','Ƴ','Ʋ','Ϊ','Ѳ','Ƥ','Ѧ','Ƽ','Δ','Ӻ','Ǥ','ⴼ','Ɉ','Ҟ','Ɫ','Ⱬ','Ӽ','Ҁ','Ѵ','Ɓ','Ɲ','ᛖ'];
+$Font_19= ['ꐎ','ꅐ','ꂅ','ꉸ','ꉢ','ꌦ','ꏵ','ꀤ','ꏿ','ꉣ','ꁲ','ꌗ','ꅓ','ꊰ','ꁅ','ꍬ','ꀭ','ꂪ','꒒','ꏣ','ꉧ','ꊐ','ꏝ','ꃃ','ꊮ','ꂵ'];
+$Font_20= ['ᘯ','ᗯ','ᕮ','ᖇ','ᙢ','ᖻ','ᑌ','ᖗ','ᗝ','ᑭ','ᗩ','ᔕ','ᗪ','ᖴ','ᘜ','ᕼ','ᒍ','ᖉ','ᒐ','ᘔ','᙭','ᑕ','ᕓ','ᗷ','ᘉ','ᗰ'];
+$Font_21= ['ᑫ','ᗯ','ᗴ','ᖇ','Ꭲ','Ꭹ','ᑌ','Ꮖ','ᝪ','ᑭ','ᗩ','ᔑ','ᗞ','ᖴ','Ꮐ','ᕼ','ᒍ','Ꮶ','Ꮮ','Ꮓ','᙭','ᑕ','ᐯ','ᗷ','ᑎ','ᗰ'];
+$Font_22= ['ℚ','Ꮤ','℮','ℜ','Ƭ','Ꮍ','Ʋ','Ꮠ','Ꮎ','⅌','Ꭿ','Ꮥ','ⅅ','ℱ','Ꮹ','ℋ','ℐ','Ӄ','ℒ','ℤ','ℵ','ℭ','Ꮙ','Ᏸ','ℕ','ℳ'];
+$Font_23= ['Ԛ','ᚠ','ᛊ','ᚱ','ᛠ','ᚴ','ᛘ','ᛨ','θ','ᚹ','ᚣ','ᛢ','ᚦ','ᚫ','ᛩ','ᚻ','ᛇ','ᛕ','ᚳ','Z','ᚷ','ᛈ','ᛉ','ᛒ','ᚺ','ᚥ'];
+$Font_24= ['𝓠','𝓦','𝓔','𝓡','𝓣','𝓨','𝓤','𝓘','𝓞','𝓟','𝓐','𝓢','𝓓','𝓕','𝓖','𝓗','𝓙','𝓚','𝓛','𝓩','𝓧','𝓒','𝓥','𝓑','𝓝','𝓜'];
+$Font_25= ['𝒬','𝒲','ℰ','ℛ','𝒯','𝒴','𝒰','ℐ','𝒪','𝒫','𝒜','𝒮','𝒟','ℱ','𝒢','ℋ','𝒥','𝒦','ℒ','𝒵','𝒳','𝒞','𝒱','ℬ','𝒩','ℳ'];$Font_26= ['ℚ','𝕎','𝔼','ℝ','𝕋','𝕐','𝕌','𝕀','𝕆','ℙ','𝔸','𝕊','𝔻','𝔽','𝔾','ℍ','𝕁','𝕂','𝕃','ℤ','𝕏','ℂ','𝕍','𝔹','ℕ','𝕄'];
+$Font_27= ['Ｑ','Ｗ','Ｅ','Ｒ','Ｔ','Ｙ','Ｕ','Ｉ','Ｏ','Ｐ','Ａ','Ｓ','Ｄ','Ｆ','Ｇ','Ｈ','Ｊ','Ｋ','Ｌ','Ｚ','Ｘ','Ｃ','Ｖ','Ｂ','Ｎ','Ｍ'];
+$Font_28= ['ǫ','ᴡ','ᴇ','ʀ','ᴛ','ʏ','ᴜ','ɪ','ᴏ','ᴘ','ᴀ','s','ᴅ','ғ','ɢ','ʜ','ᴊ','ᴋ','ʟ','ᴢ','x','ᴄ','ᴠ','ʙ','ɴ','ᴍ'];
+$Font_29= ['𝚀','𝚆','𝙴','𝚁','𝚃','𝚈','𝚄','𝙸','𝙾','𝙿','𝙰','𝚂','𝙳','𝙵','𝙶','𝙷','𝙹','𝙺','𝙻','𝚉','𝚇','𝙲','𝚅','𝙱','𝙽','𝙼'];
+$Font_30= ['ᵟ','ᵂ','ᴱ','ᴿ','ᵀ','ᵞ','ᵁ','ᴵ','ᴼ','ᴾ','ᴬ','ˢ','ᴰ','ᶠ','ᴳ','ᴴ','ᴶ','ᴷ','ᴸ','ᶻ','ˣ','ᶜ','ⱽ','ᴮ','ᴺ','ᴹ'];
+$Font_31= ['Ⓠ','Ⓦ','Ⓔ','Ⓡ','Ⓣ','Ⓨ','Ⓤ','Ⓘ','Ⓞ','Ⓟ','Ⓐ','Ⓢ','Ⓓ','Ⓕ','Ⓖ','Ⓗ','Ⓙ','Ⓚ','Ⓛ','Ⓩ','Ⓧ','Ⓒ','Ⓥ','Ⓑ','Ⓝ','Ⓜ'];
+$Font_32= ['🅀','🅆','🄴','🅁','🅃','🅈','🅄','🄸','🄾','🄿','🄰','🅂','🄳','🄵','🄶','🄷','🄹','🄺','🄻','🅉','🅇','🄲','🅅','🄱','🄽','🄼'];
+$Font_33= ['🅠','🅦','🅔','🅡','🅣','🅨','🅤','🅘','🅞','🅟','🅐','🅢','🅓','🅕','🅖','🅗','🅙','🅚','🅛','🅩​','🅧','🅒','🅥','🅑','🅝','🅜'];
+$Font_34= ['🆀','🆆','🅴','🆁','🆃','🆈','🆄','🅸','🅾','🅿','🅰','🆂','🅳','🅵','🅶','🅷','🅹','🅺','🅻','🆉','🆇','🅲','🆅','🅱','🅽','🅼'];
+$Font_35= ['🇶 ','🇼 ','🇪 ','🇷 ','🇹 ','🇾 ','🇺 ','🇮 ','🇴 ','🇵 ','🇦 ','🇸 ','🇩 ','🇫 ','🇬 ','🇭 ','🇯 ','🇰 ','🇱 ','🇿 ','🇽 ','🇨 ','🇻 ','🇧 ','🇳 ','🇲 '];
+//===. dev : @virtualdev ===\\
+$nn = str_replace($Eng,$Font_0,$matn);
+$a = str_replace($Eng,$Font_1,$matn);
+$b = str_replace($Eng,$Font_2,$matn);
+$c = trim(str_replace($Eng,$Font_3,$matn));
+$d = str_replace($Eng,$Font_4,$matn);
+$e = str_replace($Eng,$Font_5,$matn);
+$f = str_replace($Eng,$Font_6,$matn);
+$g = str_replace($Eng,$Font_7,$matn);
+$h = str_replace($Eng,$Font_8,$matn);
+$i = str_replace($Eng,$Font_9,$matn);
+$j = str_replace($Eng,$Font_10,$matn);
+$k = str_replace($Eng,$Font_11,$matn);
+$l = str_replace($Eng,$Font_12,$matn);
+$m = str_replace($Eng,$Font_13,$matn);
+$n = str_replace($Eng,$Font_14,$matn);
+$o = str_replace($Eng,$Font_15,$matn);
+$p= str_replace($Eng,$Font_16,$matn);
+$q= str_replace($Eng,$Font_17,$matn);
+$r= str_replace($Eng,$Font_18,$matn);
+$s= str_replace($Eng,$Font_19,$matn);
+$t= str_replace($Eng,$Font_20,$matn);
+$u= str_replace($Eng,$Font_21,$matn);
+$v= str_replace($Eng,$Font_22,$matn);
+$w= str_replace($Eng,$Font_23,$matn);
+$x= str_replace($Eng,$Font_24,$matn);
+$y= str_replace($Eng,$Font_25,$matn);
+$z= str_replace($Eng,$Font_26,$matn);
+$aa= str_replace($Eng,$Font_27,$matn);
+$ac= str_replace($Eng,$Font_28,$matn);
+$ad= str_replace($Eng,$Font_29,$matn);
+$af= str_replace($Eng,$Font_30,$matn);
+$ag= str_replace($Eng,$Font_31,$matn);
+$ah= str_replace($Eng,$Font_32,$matn);
+$am= str_replace($Eng,$Font_33,$matn);
+$as= str_replace($Eng,$Font_34,$matn);
+$pol= str_replace($Eng,$Font_35,$matn);
+bot('sendmessage',[
+'chat_id'=>$chat_id,
+'text' => "
+1 - $nn
+2 - $a
+3 - $b
+4 - $c
+5 - $d
+6 - $e
+7 - $f
+8 - $g
+9 - $h
+10 - $i
+11 - $j
+12 - $k
+13 - $l
+14 - $m
+15 - $n
+16 - $o
+17 - $p
+18 - $q
+19 - $r
+20 - $s
+21 - $t
+22 - $u
+23 - $v
+24 - $w
+25 - $x
+26 - $y
+27 - $z
+28 - $aa
+29 - $ac
+30 - $ad
+31 - $af
+32 - $ag
+33 - $ah
+34 - $am
+35 - $as
+36 - $pol
 
-if(strstr($data,'f_message')!=false){
-	if($situation=='ok'){
-		$position=str_replace('f_message','',$data);
-		if($position=='+'){
-			$new_number=$oders['number_frequent_message'] + 1;
-		}else{
-			$new_number=$oders['number_frequent_message'] - 1;
-		}
-		$oders['number_frequent_message']=$new_number;
-		if($new_number >= 1 && $new_number <= 10){
-			saveJson("data/groups/$chatid/oders.json",$oders);
-			editMessageReplyMarkup($chatid,$message_id2,buttonFrequentMessage($oders));
-		}
-	}
-}
-//====================================================//
-if($data=='reaction_frequent_message'){
-	if($situation=='ok'){
-		if($oders['reaction_frequent_message']=='Silent user'){
-			$oders['reaction_frequent_message']='Kick user';
-		}else{
-			$oders['reaction_frequent_message']='Silent user';
-		}
-		saveJson("data/groups/$chatid/oders.json",$oders);
-		editMessageReplyMarkup($chatid,$message_id2,buttonFrequentMessage($oders));
-	}
-}
-///=====================================================//
-if(strstr($data,'high_c_constraint_1')!=false){
-	if($situation=='ok'){
-		$position=str_replace('high_c_constraint_1','',$data);
-		if($position=='+'){
-			$new_number=$oders['highest_number_character_constraint'] + 10;
-		}else{
-			$new_number=$oders['highest_number_character_constraint'] - 10;
-		}
-		$oders['highest_number_character_constraint']=$new_number;
-		if($new_number >= 10 && $new_number <= 500){
-			saveJson("data/groups/$chatid/oders.json",$oders);
-			editMessageReplyMarkup($chatid,$message_id2,buttonCharacterConstraint($oders));
-		}else{
-			if($groups[$chatid]!='english'){
-				answerCallbackQuery("📋 بالاترین تعداد باید بین 10 و 500 باشد !",true);
-			}else{
-				answerCallbackQuery("📋 Highest Number should be between 10 and 500 !",true);
-			}
-		}
-	}
-}
-//================================================//
-if(strstr($data,'high_c_constraint_2')!=false){
-	if($situation=='ok'){
-		$position=str_replace('high_c_constraint_2','',$data);
-		if($position=='+'){
-			$new_number=$oders['highest_number_character_constraint'] + 100;
-		}else{
-			$new_number=$oders['highest_number_character_constraint'] - 100;
-		}
-		$oders['highest_number_character_constraint']=$new_number;
-		if($new_number >= 10 && $new_number <= 500){
-			saveJson("data/groups/$chatid/oders.json",$oders);
-			editMessageReplyMarkup($chatid,$message_id2,buttonCharacterConstraint($oders));
-		}else{
-			if($groups[$chatid]!='english'){
-				answerCallbackQuery("📋 بالاترین تعداد باید بین 10 و 500 باشد !",true);
-			}else{
-				answerCallbackQuery("📋 Highest Number should be between 10 and 500 !",true);
-			}
-		}
-	}
-}
-//-----------------------------------------------------///
-if($data=='silent_group'){
-	if($situation=='ok'){
-		if($oders['silent_group']=='✅'){
-			$oders['silent_group']='❌';
-			saveJson("data/groups/$chatid/oders.json",$oders);
-		}else{
-			$oders['silent_group']='✅';
-			saveJson("data/groups/$chatid/oders.json",$oders);
-		}
-		editMessageReplyMarkup($chatid,$message_id2,buttonSilent($oders));
-	}
-}
-//======================================================//
-if(strstr($data,'silent_start')){
-	if($situation=='ok'){
-		$pos=str_replace('silent_start',null,$data);
-		if($pos=='+'){
-			$number=$oders['silent_start']+1;
-		}else{
-			$number=$oders['silent_start']-1;
-		}
-		if($number>=0 && $number<=24 && $number<$oders['silent_stop']){
-			$oders['silent_start']=$number;
-			saveJson("data/groups/$chatid/oders.json",$oders);
-			editMessageReplyMarkup($chatid,$message_id2,buttonSilent($oders));
-		}
-	}
-}
-////////////////////////////////////////////////////////////////////
-if(strstr($data,'silent_stop')){
-	if($situation=='ok'){
-		$pos=str_replace('silent_stop',null,$data);
-		if($pos=='+'){
-			$number=$oders['silent_stop']+1;
-		}else{
-			$number=$oders['silent_stop']-1;
-		}
-		if($number>=0 && $number<=24 && $number>$oders['silent_start']){
-			$oders['silent_stop']=$number;
-			saveJson("data/groups/$chatid/oders.json",$oders);
-			editMessageReplyMarkup($chatid,$message_id2,buttonSilent($oders));
-		}
-	}
-}
+فونت شما آماده شد : $mtch[2] ♥
 
-if($data=='silent_list'){
-	if($situation=='ok'){
-		if($silent_list!=null){
-			if($groups[$chatid]!='english'){
-				editMessageText($chatid,$message_id2,"🌹 لیست سکوت گروه :",'HTML',buttonSilentList($silent_list));
-			}else{
-				editMessageText($chatid,$message_id2,"🌹 Silent list :\n",'HTML',buttonSilentList($silent_list));
-			}
-		}else{
-			if($groups[$chatid]!='english'){
-				answerCallbackQuery('لیست سکوت خالی است !',true);
-			}else{
-				answerCallbackQuery('Silent list is empty !',true);
-			}
-		}
-	}
-}
-if(strstr($data,'info-')){
-	if($situation=='ok'){
-		$id=str_replace('info-',null,$data);
-		$first_name=json_decode(file_get_contents('https://api.telegram.org/bot'.API_KEY.'/getChat?chat_id='.$id))->result->first_name;
-		$username=json_decode(file_get_contents('https://api.telegram.org/bot'.API_KEY.'/getChat?chat_id='.$id))->result->username;
-		$time=$silent_list[$id];
-		if($groups[$chatid]!='english'){
-			$username=$username==null?'ندارد':'@'.$username;
-			answerCallbackQuery("نام : $first_name\nیوزرنیم : $username\nتاریخ شروع محدودیت : $time",true);
-		}else{
-			$username=$username==null?"Don\'t have":'@'.$username;
-			answerCallbackQuery("Name : $first_name\nUsername : $username\nStart date limit : $time",true);
-		}
-	}
-}
-if(strstr($data,'delete-')){
-	if($situation=='ok'){
-		$id=str_replace('delete-',null,$data);
-		bot('RestrictChatMember',[
-		'chat_id'=>$chatid,
-		'user_id'=>$id,
-		'can_post_messages'=>true,
-		'can_add_web_page_previews'=>true,
-		'can_send_other_messages'=>true,
-		'can_send_media_messages'=>true,
-		'can_edit_messages'=>true
-		]);
-		unset($silent_list[$id]);
-		saveJson("data/groups/$chatid/silent_list.json",$silent_list);
-		if($silent_list!=null){
-			if($groups[$chatid]!='english'){
-				editMessageReplyMarkup($chatid,$message_id2,buttonSilentList($silent_list));
-			}else{
-				editMessageReplyMarkup($chatid,$message_id2,buttonSilentList($silent_list));
-			}
-		}else{
-			if($groups[$chatid]!='english'){
-				editMessageText($chatid,$message_id2,$text_panel_fa,'HTML',buttonSilent($oders));
-			}else{
-				editMessageText($chatid,$message_id2,$text_panel_en,'HTML',buttonSilent($oders));
-			}
-		}
-	}
-}
-if($data=='delete_all_silent'){
-	if($situation=='ok'){
-		foreach($silent_list as $key=>$value){
-			bot('RestrictChatMember',[
-			'chat_id'=>$chatid,
-			'user_id'=>$key,
-			'can_post_messages'=>true,
-			'can_add_web_page_previews'=>true,
-			'can_send_other_messages'=>true,
-			'can_send_media_messages'=>true,
-			'can_edit_messages'=>true
-			]);
-			unset($silent_list[$key]);
-		}
-		saveJson("data/groups/$chatid/silent_list.json",$silent_list);
-		if($groups[$chatid]!='english'){
-			answerCallbackQuery("تمام کاربران از لیست سکوت گروه حذف شدند 🚀",true);
-			editMessageText($chatid,$message_id2,$text_panel_fa,'HTML',buttonSilent($oders));
-		}else{
-			answerCallbackQuery("All users deleted from silent list 🚀",true);
-			editMessageText($chatid,$message_id2,$text_panel_en,'HTML',buttonSilent($oders));
-		}
-	}
-}
-//////////////////////////////////////////////////
-if($data=='selected_persian'){
-	if($situation=='ok'){
-		$groups[$chatid]='فارسی';
-		saveJson('data/bot/groups.json',$groups);
-		answerCallbackQuery("زبان گروه فارسی تنظیم شد !🚀",false);
-		editMessageText($chatid,$message_id2,"🤓👇 از کیبورد زیر برای فعال یا غیر فعال کردن یک گزینه استفاده کنید",'HTML',buttonPanel($groups[$chatid]));
-	}
-}
-/////////////////////////////////////////////////////////
-if($data=='selected_english'){
-	if($situation=='ok'){
-		$groups[$chatid]='english';
-		saveJson('data/bot/groups.json',$groups);
-		answerCallbackQuery("English group language set up !🚀",false);
-		editMessageText($chatid,$message_id2,"🤓👇 Welcome to the admin menu🌺\n\nUse the keyboard below ",'HTML',buttonPanel($groups[$chatid]));
-	}
-}
-/////////////////////////////////////////////////////////////
-if($data=='cmd_guide'){
-	if($situation=='ok'){
-		if($groups[$chatid]!='english'){
-			$button_back=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"خانه 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-			editMessageText($chatid,$message_id2,"📋| راهنمای دستورات ربات📙\n\n• دریافت منوی مدیریت :\n`penel` | `مدیرت`\n\n—----------------------------------------------------------\n\n• فعال کردن یک قفل :\n`lock` | `قفل`\n\n• غیر فعال کردن یک قفل :\n`unlock` | `بازکردن` \n\n[[ sticker | photo | gif | video | videoselfi | voice | music | document | contact | location | game | text | link | username | Hashtag | bold | italic | coding | forward | tgservice | reply | caption | bot | join ]]\n\n[[ استیکر | عکس | گیف | فیلم | ویدئوسلفی | صدا | موزیک | فایل | مخاطب | مکان | بازی | متن | لینک | یوزرنیم | هشتگ | بولد | ایتالیک | کدینگ | فوروارد | سرویس | ریپلای | کپشن | ربات | عضویت ]]\n\n—----------------------------------------------------------\n\n• نظارت بر یک قفل :\n\nشما با فراخوانی نام آن قفل می توانید بر آن نظارت کنید !\n(نام قفل ها در بالا ذکر شده است !)\n\n—----------------------------------------------------------\n\n1- شما می توانید دستورات را با حروف کوچک یا بزرگ ارسال کنید.\nربات هیچ تفاوتی بین حروف کوچک و بزرگ قاعل نمی شود !\nمثال :\nLOCK STICKER \nو\nlock sticker\nهیچ فرقی با یکدیگر ندارند.\n\n2-شما می توانید دستورات را به هرگونه که مایلید ارسال کنید.\nربات می تواند آنها را تفسیر کند !\nمثال :\nLock استیکر\nو\nقفل sticker\nهیچ فرقی با یکدیگر ندارند.\n\n3- شما می توانید داخل دستورات خود از علامت های ! و / و # استفاده کنید.\nمثال :\n/lock sticker\nو\nlo#ck sticker\nهیچ تفاوتی با هم ندارند.\n\nاستفاده از این علامت ها باعث میشود تا دستورات این ربات با دیگر ربات های درون گروه شما متمایز شود !\n\n —➖➖➖ \n\nشما میتوانید با این دستور چند پیام را بصورت متوالی حذف کنید :\n\ndelete [[number]]\nو یا\nحذف [[number]]\nبجای number می توانید عددی بین 1 تا 100 بگذارید !\n\n —➖➖➖ \n\nسکوت کاربر با دستور :\nsilent + [[reply]]\nویا\nسکوت + [[reply]]\n\n —➖➖➖ \n\nلغو سکوت افراد با دستور :\n\nunsilent + [[reply]]\nو یا\nلغو سکوت + [[reply]]\n\n —➖➖➖ \n\nبرای معاف کردن یک فرد از اد کردن اجباری به گروه دستور زیر را ارسال کنید :\n\nمعاف +  [[reply]]\nو یا\nexempt + [[reply]]\n\n —➖➖➖ \n\nبرای  حذف معافیت یک فرد از اد کردن اجباری به گروه دستور زیر را ارسال کنید :\n\nاجبار +  [[reply]]\nو یا\ncompulsor + [[reply]]",'MarkDown',$button_back);
-		}else{
-			$button_back=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"Back 🏛",'callback_data'=>"managemant_group"]]
-			]]);
-			editMessageText($chatid,$message_id2,"Robot Command Guide \n \n • Get the Admin Menu: \n`panel` | `Management` \n \n ➖➖➖ \n \n • Enable a lock: \n`lock` | `Lock` \n \n • Disable a lock: \n`unlock` | `Open` \n \n [[sticker | Photo | Gif | video | videoselfi | Voice | Music | document | contact | location | Game | Text | link | username | Hashtag | bold | Italic | Coding | Forward | tgservice | reply | Caption | bot | join]] \n \n ➖➖➖ \n \n • Monitor a lock: \n \nYou can locate it by calling it! \n (lock name above Cited!) \n \n ➖➖➖ \n \n1- You can send commands in lowercase or uppercase. \nBot no difference between uppercase and lowercase! \n Example: \nLOCK STICKER \n and \nlock sticker \n are no different. \n \n2- You can send commands as you like. \n The robot can interpret them! \n Example: \nLock Sticker \n and \n lock the sticker \n are no different. \n \n3- You can insert your own commands from the characters! And / and #. \n Example: \n / lock sticker \n and \nlo # ck sticker \n are no different. \n \n Use of these tags makes the robot commands with other robots within your group Be distinctive! \n \n ➖➖➖ \n\nYou should delete message by this command :\n\ndelete [[number]]\nInsert number instead of number !\nThe number should be between 1 and 100 !\n\n----------------------------------------------------------\n\nsilent users by :\nsilent\n\n----------------------------------------------------------\n\nunsilent users by : \n unsilent\n\n ----------------------------------------------------------- \n\nIf you want to exempt a person from compulsory adding, send the following command:\n\n exempt + [[reply]]\n\n ----------------------------------------------------------- \n\nTo remove the impersonation of a person from the mandatory submission to the group, submit the following command: \n\ncompulsor + [[reply]]",'MarkDown',$button_back);
-		}
-	}
-}
+دقت کنید که فقط از متن های انگلیسی یا لاتین میتوانید استفاده کنید ." ,
+'parse_mode'=>'MarkDown',
+]);}
+if(preg_match('~^معنی (.+)~s',$text,$match) and $match=$match[1]) {
+preg_match('~<p class="">(.+?)</p>~si',file_get_contents('https://www.vajehyab.com/?q='.urlencode($match)),$p);
+$p=trim(strip_tags(preg_replace(['~<[a-z0-9]+?>.+?</[a-z0-9]+?>|&.+?;~','~<br.+?>~s'],['',"\n"],$p[1])));
+if($p)
+bot('sendmessage',[
+'chat_id'=>$chat_id,
+'text'=>"کلمه اولیه : $match
+ معنی: 
+$p",'reply_to_message_id'=>$message_id, 'reply_markup'=>$or,]);
+else
+$bot = [
+"خب بسه برو پنج دقه دیگه بیا 😐",
+"مسخره کردی منو😕",
+"نیست آقا ، خانم نیست 🤬",
+];
+$r = $bot[rand(0, count($bot)-1)];
+bot('sendMessage',[
+'chat_id' =>$chat_id,
+'text' => "$r",
+'reply_to_message_id'=>$message_id,
+'reply_markup'=>$or,
+]);}
+//=== dev : @virtualdev ===\\
+if($text=="دانستنی" or $text == "Bilmoq"){
+$get = file_get_contents("http://api.novateamco.ir/danestani/");
+$result = json_decode($get, true);
+bot('sendmessage',[
+'chat_id'=>$chat_id,
+'text'=>"• دانستنی ~ ".$result['result']."\n💬 شماره : *".$result['code']."*",
+'reply_to_message_id'=>$message_id,
+'parse_mode'=>'MarkDown',
+'reply_markup'=>$or,
+]);}
+//=== dev : @virtualdev ===\\
+if(preg_match('/^(gif|گیف) (.*)/s', $text, $mtch)){
+//===. dev : @virtualdev ===\\
+$matn = strtoupper("$mtch[2]");
+$bot = [
+"https://www.flamingtext.com/net-fu/proxy_form.cgi?imageoutput=true&script=alien-glow-anim-logo&text=$matn&doScale=true&scaleWidth=240&scaleHeight=120",
+"https://www.flamingtext.com/net-fu/proxy_form.cgi?imageoutput=true&script=flash-anim-logo&text=$matn&doScale=true&scaleWidth=240&scaleHeight=120",
+"https://www.flamingtext.com/net-fu/proxy_form.cgi?imageoutput=true&script=shake-anim-logo&text=$matn&doScale=true&scaleWidth=240&scaleHeight=120",
+"https://www.flamingtext.com/net-fu/proxy_form.cgi?imageoutput=true&script=highlight-anim-logo&text=$matn&doScale=true&scaleWidth=240&scaleHeight=120",
+"https://www.flamingtext.com/net-fu/proxy_form.cgi?imageoutput=true&script=blue-fire&text=$matn&doScale=true&scaleWidth=240&scaleHeight=120",
+"https://www.flamingtext.com/net-fu/proxy_form.cgi?imageoutput=true&script=burn-in-anim-logo&text=$matn&doScale=true&scaleWidth=240&scaleHeight=120",
+"https://www.flamingtext.com/net-fu/proxy_form.cgi?imageoutput=true&script=whirl-anim-logo&text=$matn&doScale=true&scaleWidth=240&scaleHeight=120",
+"https://www.flamingtext.com/net-fu/proxy_form.cgi?imageoutput=true&script=inner-fire-anim-logo&text=$matn&doScale=true&scaleWidth=240&scaleHeight=120",
+"https://www.flamingtext.com/net-fu/proxy_form.cgi?imageoutput=true&script=glitter-anim-logo&text=$matn&doScale=true&scaleWidth=240&scaleHeight=120",
+"https://www.flamingtext.com/net-fu/proxy_form.cgi?imageoutput=true&script=flaming-logo&text=$matn&doScale=true&scaleWidth=240&scaleHeight=120",
+"https://www.flamingtext.com/net-fu/proxy_form.cgi?imageoutput=true&script=memories-anim-logo&text=$matn&doScale=true&scaleWidth=240&scaleHeight=120",
+];
+$r = $bot[rand(0, count($bot)-1)];
+bot('senddocument',[
+'chat_id'=>$chat_id,
+'document'=>"$r",
+'caption'=>"@$channel",
+'reply_to_message_id'=>$message_id,
+]);}
+//-------
+if($text == "me" or $text == "من" ){
+$profile = "https://telegram.me/$username";
+ bot('sendphoto',[
+'chat_id' => $chat_id,
+'photo'=>$profile,
+'caption' =>"🔖 مشخصات شما:
+🪅 شناسه شما: $from_id
+🪅 شناسه گپ: $chat_id",
+  'reply_markup'=>json_encode([
+ 'inline_keyboard'=>[
+[['text'=>"🪄 یوزرنیم شما", "callback_data"=>"text"],['text'=>"@$username", "callback_data"=>"text"]],
+[['text'=>"🪄 نام شما", "callback_data"=>"text"]],[['text'=>"$first_name $last_name", "callback_data"=>"text"]],
+[['text'=>"💞 افزودن $name_bot به گروه 💞",'url'=>"https://t.me/$bottag?startgroup=new"]],]]) ]);}
+//--------//////--------/////-----
+if($text == "fal" or $text == "فال"){
+$add = "http://www.beytoote.com/images/Hafez/".rand(1,149).".gif";
+bot('sendphoto', [
+'chat_id' => $chat_id,
+'photo'=>$add,
+'caption' =>"📜 فال شما ارسال شد!",
+'reply_to_message_id'=>$message_id,
+]); }
+//=== dev : @virtualdev ===\\
+if($text == "time" or $text == "ساعت" ){
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+'text'=>date('H:i:s'),
+ 'reply_to_message_id'=>$message_id,
+ ]); }
 
-if($data=='exit'){
-	if($situation=='ok'){
-		deleteMessage($chatid,$message_id2);
-	}
-}
+if($text == "جوک" or $text == "jok"){
+$jok = file_get_contents("http://api.codebazan.ir/jok");
+ bot('sendmessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"
+ ➖➖➖➖🤣➖➖➖➖
+ 
+ $jok
+ 
+ ➖➖➖➖➖➖➖➖➖
+",
+'reply_to_message_id'=>$message_id,
+]); }
+ 
+ if($text == "پسورد" or $text == "pass"){
+ $passwordSaz = file_get_contents("http://api.codebazan.ir/password/?length=12");
+ bot('sendmessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"
+ ➖➖➖➖🔐➖➖➖➖
+ 
+ پسورد قدرتمند شما : $passwordSaz
+ 
+ ➖➖➖➖➖➖➖➖➖
+",
+'reply_to_message_id'=>$message_id,
+]); }
+ 
+ if($text == "الکی مثلا" or $text == "fake"){
+ $alakimasalan = file_get_contents("http://api.codebazan.ir/jok/alaki-masalan/");
+ bot('sendmessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"
+ ➖➖➖➖💣➖➖➖➖
+ 
+ $alakimasalan
+ 
+ ➖➖➖➖➖➖➖➖➖
+",
+'reply_to_message_id'=>$message_id,
+]); }
 
-if(isset($update->message)){
-	foreach($update->message as $key=>$value){
-		if(($key=='new_chat_member' || $key=='left_chat_member' || $key=='new_chat_photo' || $key=='delete_chat_photo' || $key=='pinned_message' || $key=='new_chat_title') && $settings['tgservice']=='✅'){
-			deleteMessage($chatid,$message_id);
-		}
-	}
-}
-if(isset($update->message)){
-	if($situation3=='ok'){
-		foreach($update->message as $key=>$value){
-			if($settings[$key]=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($key=='video_note' && $settings['videoselfi']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($key=='audio' && $settings['music']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($key=='reply_to_message' && $settings['reply']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($key=='caption' && $settings['caption']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif(($key=='forward_from' || $key=='forward_from_chat' || $key=='forward_signature') && $settings['forward']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-		}
-	}
-}
-if($update->message->entities){
-	if($situation3=='ok'){
-		foreach($update2['message']['entities'] as $key=>$value){
-			$e=$update2['message']['entities'][$key]['type'];
-			if($e=='bold' && $settings['bold']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='italic' && $settings['italic']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='hashtag' && $settings['hashtag']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='url' && $settings['link']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='text_link' && $settings['link']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='mention' && $settings['username']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='text_mention' && $settings['username']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='code' && $settings['coding']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-		}
-	}
-}
-if($update2->message->caption_entities){
-	if($situation3=='ok'){
-		foreach($update2['message']['caption_entities'] as $key=>$value){
-			$e=$update2['message']['caption_entities'][$key]['type'];
-			if($e=='bold' && $settings['bold']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='italic' && $settings['italic']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='hashtag' && $settings['hashtag']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='url' && $settings['link']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='text_link' && $settings['link']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='mention' && $settings['username']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='text_mention' && $settings['username']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-			elseif($e=='code' && $settings['coding']=='✅'){
-				deleteMessage($chatid,$message_id);
-			}
-		}
-	}
-}
-if($update->message->new_chat_member->is_bot==true && $settings['bot']=='✅' && $situation3=='ok'){
-	kickChatMember($chatid,$new_chat_member_id);
-}
-if($update->message->from->is_bot==true && $settings['bot']=='✅' && $situation3=='ok'){
-	kickChatMember($chatid,$fromid);
-}
-if($oders['compulsory_add']=='✅' && in_array($fromid,$exempt_list)==false){
-	if($situation3=='ok'){
-		if($number_add[$fromid]==null){
-			$number_add[$fromid][]=0;
-			$number_add[$fromid][]='no';
-		}
-		if($number_add[$fromid][0]<$oders['number_compulsory_add']){
-			if($new_chat_member_id!=$fromid && isset($update->message->new_chat_member) && $update->message->new_chat_member->is_bot==false){
-				$new_number=$number_add[$fromid][0]+1;
-				$number_add[$fromid][0]=$new_number;
-				$new_count=$oders['statistics_compulsory_add']+1;
-				$oders['statistics_compulsory_add']=$new_count;
-				saveJson("data/groups/$chatid/oders.json",$oders);
-				if($number_add[$fromid][0]>=$oders['number_compulsory_add']){
-					if($groups[$chatid]!='english'){
-						sendMessage($chatid,"کاربر $first_name\nشما $oders[number_compulsory_add] عضو را به گروه دعوت کردید و شما مبتوانید اکنون در گروه چت کنید !",'HTML',null,null);
-					}else{
-						sendMessage($chatid,"User $first_name\nYou invited $oders[number_compulsory_add] members to the group and you can now chat in the group.🌹",'HTML',null,null);
-					}
-				}else{
-					$sould_num=$oders['number_compulsory_add']-$number_add[$fromid][0];
-					$my_add=$number_add[$fromid][0];
-					if($groups[$chatid]!='english'){
-						sendMessage($chatid,"کاربر $first_name\nشما یک نفر را به گروه دعوت کردید.🤠\nشما باید $sould_num عضو دیگر را به گروه دعوت کنید تا بتوانید چت کنید♨️\n🐾تعداد نفراتی که توسط شما دعوت شده اند : $my_add",'HTML',null,null);
-					}else{
-						sendMessage($chatid,"User $first_name\nYou invited someone to the group.🤠\nYou still have to invite $sould_num others to chat so that you can chat♨️\n🐾Number of members invited by you : $my_add",'HTML',null,null);
-					}
-					deleteMessage($chatid,$message_id);
-				}
-			}
-			elseif(empty($update->message->left_chat_member)){
-				if($number_add[$fromid][1]!='yes'){
-					$number_add[$fromid][1]='yes';
-					if($groups[$chatid]!='english'){
-						sendMessage($chatid,"کاربر $first_name\nشما باید $oders[number_compulsory_add] عضو را به گروه دعوت کنید تا بتوانید چت کنید !📋 \nدر غیر این صورت پیام شما از گروه حذف میشود !💢",'HTML',null,null);
-					}else{
-						sendMessage($chatid,"User $first_name\nYou must invite $oders[number_compulsory_add] members to group in order to be able to chat!📋 \nOtherwise, your message will be deleted from the group !💢",'HTML',null,null);
-					}
-				}
-				deleteMessage($chatid,$message_id);
-			}
-			saveJson("data/groups/$chatid/number_add.json",$number_add);
-		}
-	}
-}
-if($oders['compulsory_join']=='✅'){
-	if($situation3=='ok'){
-		$join=json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=".$oders['channel_compulsory_join']."&user_id=".$fromid))->result->status;
-		if($join!='member' && $join!='administrator' && $join!='creator'){
-			deleteMessage($chatid,$message_id);
-			$join=json_decode(file_get_contents("data/groups/$chatid/join.json"),true);
-			if($join[$fromid]==null){
-				$join[$fromid]='ok';
-				saveJson("data/groups/$chatid/join.json",$join);
-				$username=str_replace('@','',$oders['channel_compulsory_join']);
-				if($groups[$chatid]!='english'){
-					$button_join=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-					[['text'=>"🍃برای عضویت کلیک کنید🍃",'url'=>"https://t.me/".$username]]
-					]]);
-					sendMessage($chatid,"🌹سلام $first_name\nشما باید در کانال ما عضو شوید تا بتوانید در گروه چت کنید.در غیر این صورت پیام شما از گروه حذف میشود.\nبرای عضویت در کانال ما روی دکمه زیر کلیک کنید !⬇️",'HTML',$button_join,null);
-				}else{
-					$button_join=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-					[['text'=>"🍃Click to join🍃",'url'=>"https://t.me/".$username]]
-					]]);
-					sendMessage($chatid,"🌹Hello $first_name\nYou must be a member of our channel to be able to chat in the group. Otherwise your message will be deleted.\nClick the button below to subscribe to our channel !⬇️",'HTML',$button_join,null);
-				}
-			}
-		}
-	}
-}
-if($oders['frequent_message']=='✅'){
-	if($situation3=='ok'){
-		$time=date('Y-m-d-h-i-sa');
-		$time=str_replace('am',null,$time);
-		if(!array_key_exists($fromid,$spam)){
-			$spam[$fromid][]=$time;
-			$spam[$fromid][]=1;
-		}else{
-			if($spam[$fromid][0]==$time){
-				$spam[$fromid][1]=$spam[$fromid][1]+1;
-			}else{
-				$spam[$fromid][0]=$time;
-				$spam[$fromid][1]=1;
-			}
-		}
-		saveJson('data/groups/'.$chatid.'/spam.json',$spam);
-		$number=$spam[$fromid][1];
-		if($number>=$oders['number_frequent_message'] && $spam[$fromid][0]==$time){
-			if($oders['reaction_frequent_message']=='Silent user'){
-				bot('RestrictChatMember',[
-				'chat_id'=>$chatid,
-				'user_id'=>$fromid,
-				'can_post_messages'=>false,
-				'can_add_web_page_previews'=>false,
-				'can_send_other_messages'=>false,
-				'can_send_media_messages'=>false,
-				'can_edit_messages'=>false
-				]);
-				$silent_list[$fromid]=date('Y/m/d');
-				saveJson('data/groups/'.$chatid.'/silent_list.json',$silent_list);
-				if($groups[$chatid]!='english'){
-					sendMessage($chatid,"کاربر $first_name بدلیل ارسال بیش از حد پیام در یک ثانیه توانایی چت خود را از دست داد !❌",'HTML',null,$message_id);
-				}else{
-					sendMessage($chatid,"The user $first name lost the ability to chat due to over-message sending in a second! ❌",'HTML',null,$message_id);
-				}
-			}
-			elseif($oders['reaction_frequent_message']=='Kick user'){
-				kickChatMember($chatid,$fromid);
-				if($groups[$chatid]!='english'){
-					sendMessage($chatid,"کاربر $first_name بدلیل ارسال بیش از حد پیام در 1 ثانیه از گروه اخراج شد ❌",'HTML',null,$message_id);
-				}else{
-					sendMessage($chatid,"The user $first name was expelled from the group because of an over-message sending in the group ❌",'HTML',null,$message_id);
-				}
-			}
-		}
-	}
-}
-if($oders['character_constraint']=='✅'){
-	if($situation3=='ok'){
-		if(strlen($text)>$oders['highest_number_character_constraint']){
-			deleteMessage($chatid,$message_id);
-			$e=$oders['highest_number_character_constraint'];
-			if($groups[$chatid]!='english'){
-				sendMessage($chatid,"کاربر $first_name\nتعداد کاراکتر های پیام شما بیش از حد 📋 \nشما می توانید پیام هایی با حداکثر طول $e کاراکتر ارسال کنید‼️",'HTML',null,null);
-			}else{
-				sendMessage($chatid,"User $first_name\nThe number of characters in your message exceeds the limit⚠️\nYou can send messages with a length of $e characters‼️",'HTML',null,null);
-			}
-		}
-	}
-}
+elseif(strpos($text,"/photo") !== false){
+ $text = explode(" ",$text);
+ $textn = $text['1'];
+bot('sendphoto', [
+'chat_id' => $chat_id,
+ 'photo'=>"https://assets.imgix.net/examples/clouds.jpg?blur=150&w=500&h=500&fit=crop&txt=$textn&txtsize=100&txtclr=ff2e4357&txtalign=middle,center&txtfont=Futura%20Condensed%20Medium&mono=ff6598cc",
+ 'caption'=>"☝️ لوگوی شما با نام $textn ساخته شد✅",
+   'reply_to_message_id'=>$message_id,
+ ]);
+ }
+}}
+//=== dev : @virtualdev ===\\
+if($text == "/panel"){
+if($tc == "private" ){
+if(in_array($chat_id,$admins)){
+step($chat_id,"none");
+ bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"💒 به پنل مدیریتی ربات خوش آمدید.",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+ 'inline_keyboard'=>[
+//===. dev : @virtualdev ===\\
+ [['text'=>"🪄 پاکسازی لیست انتظار 🪄",'callback_data'=>'delint']],
+[['text'=>"📗 تایید اجباری کلمه : $yadauto",'callback_data'=>'setAuto']],
+ [['text'=>"📊 آمار کلی",'callback_data'=>'stats'],['text'=>"🗑 حذف کلمه",'callback_data'=>'delkalame']],
+ [['text'=>"❓ بلاک شخص",'callback_data'=>'black'],['text'=>"❔ آنبلاک شخص",'callback_data'=>'unblack']],
+[['text'=>"📨 فوروارد به گروه ها",'callback_data'=>'forgp'],['text'=>"📨 فوروارد به کاربران",'callback_data'=>'foruser']],
+[['text'=>"🗳 ارسال به گروه ها",'callback_data'=>'sendgp'],['text'=>"🗳 ارسال به کاربران",'callback_data'=>'senduser']],
+[['text'=>"📮 ارسال به همه",'callback_data'=>'sendall'],['text'=>"📮 فوروارد به همه",'callback_data'=>'forall']],
+[['text'=> "🖥 منوی استارت", 'callback_data'=>"back"]],]])
+]); }}}
+if($data == "stats" ){
+$ex1 = explode("\n",$all_users);
+$ex2 = explode("\n",$all_gaps);
+$c1 = count($ex1)-1;
+$c2 = count($ex2)-1;
+$document = 'data/kalamat';
+$scan = scandir($document);
+$scan = array_diff($scan, ['.','..']);
+$fil = count($scan);
+$ca = count($admins);
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+ 'text'=>"📊 آمار ربات شما:
+ 
+🚻 کاربران: $c1
+🛗 گروه ها: $c2
+🛃 ادمین ها: $ca
+🛄 کلمات: $fil",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🪄 پاکسازی لیست انتظار 🪄",'callback_data'=>'delint']],
+[['text'=>"📗 تایید اجباری کلمه : $yadauto",'callback_data'=>'setAuto']],
+            [['text'=>"📊 آمار کلی",'callback_data'=>'stats'],['text'=>"🗑 حذف کلمه",'callback_data'=>'delkalame']],
+          [['text'=>"❓ بلاک شخص",'callback_data'=>'black'],['text'=>"❔ آنبلاک شخص",'callback_data'=>'unblack']],
+         [['text'=>"📨 فوروارد به گروه ها",'callback_data'=>'forgp'],['text'=>"📨 فوروارد به کاربران",'callback_data'=>'foruser']],
+         [['text'=>"🗳 ارسال به گروه ها",'callback_data'=>'sendgp'],['text'=>"🗳 ارسال به کاربران",'callback_data'=>'senduser']],
+         [['text'=>"📮 ارسال به همه",'callback_data'=>'sendall'],['text'=>"📮 فوروارد به همه",'callback_data'=>'forall']],
+         [['text'=> "🖥 منوی استارت", 'callback_data'=>"back"]],
+  ]
+        ])
+ ]); }
+if($data == "back_p" ){
+step($chatid,"none");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+ 'text'=>"💒 به منوی اصلی پنل مدیریت بازگشتید!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+[['text'=>"🪄 پاکسازی لیست انتظار 🪄",'callback_data'=>'delint']],
+[['text'=>"📗 تایید اجباری کلمه : $yadauto",'callback_data'=>'setAuto']],
+[['text'=>"📊 آمار کلی",'callback_data'=>'stats'],['text'=>"🗑 حذف کلمه",'callback_data'=>'delkalame']],
+[['text'=>"❓ بلاک شخص",'callback_data'=>'black'],['text'=>"❔ آنبلاک شخص",'callback_data'=>'unblack']],
+[['text'=>"📨 فوروارد به گروه ها",'callback_data'=>'forgp'],['text'=>"📨 فوروارد به کاربران",'callback_data'=>'foruser']],
+[['text'=>"🗳 ارسال به گروه ها",'callback_data'=>'sendgp'],['text'=>"🗳 ارسال به کاربران",'callback_data'=>'senduser']],
+[['text'=>"📮 ارسال به همه",'callback_data'=>'sendall'],['text'=>"📮 فوروارد به همه",'callback_data'=>'forall']],
+[['text'=> "🖥 منوی استارت", 'callback_data'=>"back"]],]]) ]); }
+elseif($data == "setAuto" ){
+if($yadauto == "✅"){
+file_put_contents("data/autoYAD.txt","⬜");}
+if($yadauto == "⬜"){
+file_put_contents("data/autoYAD.txt","✅");}
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+ 'text'=>$textt,
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🪄 پاکسازی لیست انتظار 🪄",'callback_data'=>'delint']],
+[['text'=>"📗 تایید اجباری کلمه : $yadauto",'callback_data'=>'setAuto']],
+                  [['text'=>"📊 آمار کلی",'callback_data'=>'stats'],['text'=>"🗑 حذف کلمه",'callback_data'=>'delkalame']],
+                  [['text'=>"❓ بلاک شخص",'callback_data'=>'black'],['text'=>"❔ آنبلاک شخص",'callback_data'=>'unblack']],
+         [['text'=>"📨 فوروارد به گروه ها",'callback_data'=>'forgp'],['text'=>"📨 فوروارد به کاربران",'callback_data'=>'foruser']],
+                  [['text'=>"🗳 ارسال به گروه ها",'callback_data'=>'sendgp'],['text'=>"🗳 ارسال به کاربران",'callback_data'=>'senduser']],
+                  [['text'=>"📮 ارسال به همه",'callback_data'=>'sendall'],['text'=>"📮 فوروارد به همه",'callback_data'=>'forall']],
+                  [['text'=> "🖥 منوی استارت", 'callback_data'=>"back"]],
+              ]
+        ])
+]); 
+bot('answercallbackquery', [
+        'callback_query_id' => $update->callback_query->id,
+        'text' => "✅ تغییرات انجام شد.",
+        'show_alert' => false
+    ]);}
+if($data == "delint"){
+deletefolder("data/int");
+bot('answercallbackquery', [
+        'callback_query_id' => $update->callback_query->id,
+        'text' => "🗑️ لیست انتظار پاکسازی شد!",
+        'show_alert' => true
+    ]);}
+//=== dev : @virtualdev ===\\
+if($data == "forall" ){
+step($chatid,"forall");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+ 'text'=>"📥 پیام را فوروارد کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[[['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],]])
+]); }
+elseif($user['step'] == "forall"  && $tc == "private"){
+if($tc == "private" && in_array($chat_id,$admins)){
+ bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"📳 در حال انجام، لطفا صبر کنید ...",
+ 'parse_mode'=>"MarkDown",
+ ]); 
+      $ex = explode("\n",$all_users);
+    foreach($ex as $key){
+bot('ForwardMessage',[
+'chat_id'=>$key,
+'from_chat_id'=>$chat_id,
+'message_id'=>$message_id
+]);}
+ $exs = explode("\n",$all_gaps);
+          foreach($exs as $key){
+ bot('ForwardMessage',[
+'chat_id'=>$key,
+'from_chat_id'=>$chat_id,
+'message_id'=>$message_id
+]);}
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"📑 پیام برای همه فوروارد شد!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ]
+       ]) ]);  } }
+	if($data == "sendall" ){
+step($chatid,"sendall");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+ 'text'=>"📥 پیام را ارسال کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ]
+        ]) ]); }
 
-if($oders['silent_group']=='✅'){
-	if($situation3=='ok'){
-		if($oders['silent_start']<=date('H') && $oders['silent_stop']>=date('H')){
-			deleteMessage($chatid,$message_id);
-		}
-	}
-}
-if($oders['silent_group']=='✅'){
-	if($oders['silent_start']==date('H') && $oders['silent_ok']!='✅'){
-		$oders['silent_ok']='✅';
-		saveJson("data/groups/$chatid/oders.json",$oders);
-		$start=$oders['silent_start'];
-		$stop=$oders['silent_stop'];
-		if($groups[$chatid]!='english'){
-			sendMessage($chatid,"گروه بصورت خودکار در حال سکوت قرار گرفت \n\nتمامی پیام هایی که از ساعت `$start` تا `$stop` ارسال شوند توسط ربات حذف خواهند شد !🗑",'MarkDown',null,null);
-		}else{
-			sendMessage($chatid,"The group was automatically silent !🚀\n\nAll messages sent from the `$start` to `$stop` will be deleted by the robot! 🗑",'MarkDown',null,null);
-		}
-	}
-}
-if(($oders['silent_start']>date('H') && $oders['silent_stop']>date('H')) || ($oders['silent_start']<date('H') && $oders['silent_stop']<date('H')) || $oders['silent_group']=='❌'){
-	if($oders['silent_ok']=='✅'){
-		$oders['silent_ok']='❌';
-		saveJson("data/groups/$chatid/oders.json",$oders);
-	}
-}
+	elseif($user['step'] == "sendall"  && $tc == "private"){
+	if($tc == "private" && in_array($chat_id,$admins)){
+	 bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"📳 در حال انجام، لطفا صبر کنید ...",
+ 'parse_mode'=>"MarkDown",
+	 ]); 
+                $ex = explode("\n",$all_users);
+               foreach($ex as $key){
+ bot('sendMessage',[
+ 'chat_id'=>$key,
+ 'text'=>$text,
+   'disable_web_page_preview'=>true,
+]);}
+$exs = explode("\n",$all_gaps);
+            foreach($exs as $key){
+bot('sendMessage',[
+ 'chat_id'=>$key,
+ 'text'=>$text,
+   'disable_web_page_preview'=>true,
+]);}
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"📑 پیام برای همه ارسال شد!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ]
+        ]) ]);  } }
+	if($data == "senduser" ){
+step($chatid,"senduser");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+ 'text'=>"📥 پیام را ارسال کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ]
+        ]) ]); }
+	elseif($user['step'] == "senduser"  && $tc == "private"){
+	if($tc == "private" && in_array($chat_id,$admins)){
+	 bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"📳 در حال انجام، لطفا صبر کنید ...",
+ 'parse_mode'=>"MarkDown",
+	 ]); 
+     $ex = explode("\n",$all_users);
+      foreach($ex as $key){
+  bot('sendMessage',[
+ 'chat_id'=>$key,
+ 'text'=>$text,
+   'disable_web_page_preview'=>true,
+	]);}
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"📑 پیام به همه کاربران ارسال شد!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ]  ]) ]);  } }
+if($data == "sendgp" ){
+step($chatid,"sendgp");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+ 'text'=>"📥 پیام را ارسال کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+  ]
+  ])
+ ]); }
+//=== .dev : @virtualdev ===\\
 
-if($filter_cmd=='start' || $filter_cmd=='panel'){
-	if($tc=='private'){
-		if($chatid==$Dev){
-			file_put_contents('data/bot/step.txt','home');
-		}
-		if($members[$chatid]!=null){
-			if($members[$chatid]!='english'){
-				sendMessage($chatid,$text_start_fa,'MarkDown',buttonPanelPrivate($chatid),$message_id);
-			}else{
-				sendMessage($chatid,$text_start_en,'MarkDown',buttonPanelPrivate($chatid),$message_id);
-			}
-		}else{
-			sendMessage($chatid,"سلام به ربات ضدلینک رایگان ما خوش امدید لطفا گزینه مورد نظر خود را انتخاب کنید",'HTML',$button_select_lan,$message_id);
-		}
-		die;
-	}
-}
+elseif($user['step'] == "sendgp"  && $tc == "private"){
+if($tc == "private" && in_array($chat_id,$admins)){
+ bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"📳 در حال انجام، لطفا صبر کنید ...",
+ 'parse_mode'=>"MarkDown",
+	 ]); 
+ $ex = explode("\n",$all_gaps);
+ foreach($ex as $key){
+ bot('sendMessage',[
+ 'chat_id'=>$key,
+ 'text'=>$text,
+   'disable_web_page_preview'=>true,
+	]);}
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"📑 پیام به همه گروه ها ارسال شد!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ] ]) ]);  } }
+if($data == "foruser" ){
+step($chatid,"foruser");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+ 'text'=>"📥 پیام را فوروارد کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ] ]) ]); }
+elseif($user['step'] == "foruser"  && $tc == "private"){
+if($tc == "private" && in_array($chat_id,$admins)){
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"📳 در حال انجام، لطفا صبر کنید ...",
+ 'parse_mode'=>"MarkDown", ]); 
+   $ex = explode("\n",$all_users);
+   foreach($ex as $key){
+   bot('ForwardMessage',[
+'chat_id'=>$key,
+'from_chat_id'=>$chat_id,
+'message_id'=>$message_id
+]);}
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"📑 پیام به همه کاربران فوروارد شد!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+    [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ] ]) ]);  } }
+if($data == "forgp" ){
+step($chatid,"forgp");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+ 'text'=>"📥 پیام را فوروارد کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ]
+        ]) ]); }
+elseif($user['step'] == "forgp"  && $tc == "private"){
+if($tc == "private" && in_array($chat_id,$admins)){
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"📳 در حال انجام، لطفا صبر کنید ...",
+ 'parse_mode'=>"MarkDown",
+ ]); 
+  $ex = explode("\n",$all_gaps);
+  foreach($ex as $key){
+  bot('ForwardMessage',[
+'chat_id'=>$key,
+'from_chat_id'=>$chat_id,
+'message_id'=>$message_id
+]);}
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"📑 پیام به همه گروه ها فوروارد شد!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ]
+       ]) ]);  } }
+//=== dev : @virtualdev ===\\
 
+if($data == "unblack" ){
+step($chatid,"unblack");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+ 'text'=>"🎓 شناسه کاربر را ارسال کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ]
+        ]) ]); }
 
-
-if($data=='selected_persian'){
-	if($tc2=='private'){
-		if($chatid==$Dev){
-			file_put_contents('data/bot/step.txt',$data);
-		}
-		$members[$chatid]='فارسی';
-		saveJson('data/bot/members.json',$members);
-		answerCallbackQuery("زبان ربات فارسی تنظیم شد !🚀",false);
-		editMessageText($chatid,$message_id2,$text_start_fa,'MarkDown',buttonPanelPrivate($chatid));
-	}
-}
-////////////////////////////////////////////////////////////////////
-if($data=='selected_english'){
-	if($tc2=='private'){
-		if($chatid==$Dev){
-			file_put_contents('data/bot/step.txt',$data);
-		}
-		$members[$chatid]='english';
-		saveJson('data/bot/members.json',$members);
-		answerCallbackQuery("English robot language set up !🚀",false);
-		editMessageText($chatid,$message_id2,$text_start_en,'MarkDown',buttonPanelPrivate($chatid));
-	}
-}
-if($data=='hamed'){
-	if($tc2=='private'){
-		if($chatid==$Dev){
-			file_put_contents('data/bot/step.txt',$data);
-		}
-		if($members[$chatid]!='english'){
-			$button_guide=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"راهنمای قابلیت ها 🔆",'callback_data'=>"feature_guide"],['text'=>"راهنمای نصب🛠",'callback_data'=>"نصب_guide"]],
-			[['text'=>"برگشت به منو 🔙",'callback_data'=>"managemant_group_private"]]
-			]]);
-			editMessageText($chatid,$message_id2,"🔸در صورتی که نمی دانید چگونه ربات را در گروه خود نصب کنید از این بخش استفاده کنید.\n\n🔹راهنمای قابلیت ها :\nدرصورتی که نمی دانید چگونه از دستورات و قابلیت های ربات استفاده کنید از این بخش استفاده کنید.",'MarkDown',$button_guide);
-		}else{
-			$button_guide=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"Feature Guide 🔆",'callback_data'=>"feature_guide"],['text'=>"نصب Guide🛠",'callback_data'=>"نصب_guide"]],
-			[['text'=>"Back to menu 🔙",'callback_data'=>"managemant_group_private"]]
-			]]);
-			editMessageText($chatid,$message_id2,"🔸نصب Guide :\nIf you do not know how to install the robot in your group, use this section.\n\n🔹Feature Guide :\nIf you do not know how to use robot commands and capabilities, use this section.",'MarkDown',$button_guide);
-		}
-	}
-}
-//////////////////////////////////////////////////////////////////
-if($data=='نصب_guide'){
-	if($tc2=='private'){
-		if($chatid==$Dev){
-			file_put_contents('data/bot/step.txt',$data);
-		}
-		if($members[$chatid]!='english'){
-			$button_back_guide=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"خانه 🏛",'callback_data'=>"hamed"]]
-			]]);
-			editMessageText($chatid,$message_id2,"راهنماینصب ربات در گروه :❌\n\n1 . روی [این لینک](https://telegram.me/$usernamebot?startgroup=new) کلیک کنید و ربات را به گروه خود اضافه کنید.\n\n2 . سپس ربات را مدیر گروه خود کنید و دسترسی های کامل به آن بدهید.(دسترسی آخر یا همان اضافه کردن مدیر اجباری نیست !)\n\n3 . سپس دستور `نصب` و یا `پیکربندی` را داخل گروه خود ارسال کنید.\n\nربات به $usernamebotین راحتی داخل گروه شما نصب شد :)",'MarkDown',$button_back_guide);
-		}else{
-			$button_back_guide=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"Back 🏛",'callback_data'=>"hamed"]]
-			]]);
-			editMessageText($chatid,$message_id2,"The robot installation guide for the group: ❌ \n\n1. Click [This Link] (https://telegram.me/$usernamebot?startgroup=new) and add the robot to your group.\n\n2. Then manage your robot and give it full access. (The last access is the addition of a compulsory manager!) \n\n3. Then send the `نصب` command in your group. \n\nThe robot is installed within your group just as easily :)",'MarkDown',$button_back_guide);
-		}
-	}
-}
-/////////////////////////////////////////////////////////////////
-if($data=='feature_guide'){
-	if($tc2=='private'){
-		if($chatid==$Dev){
-			file_put_contents('data/bot/step.txt',$data);
-		}
-		if($members[$chatid]!='english'){
-			$button_back_guide=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"خانه 🏛",'callback_data'=>"hamed"]]
-			]]);
-			editMessageText($chatid,$message_id2,"راهنمای استفاده از دستورات و قابلیی ربات :❌\n\n• شما می توانید قبل از دستورات ربات علامت های ! / # را بگذارید و حتی می توانید بدون گذاشتن علامت دستوراات را ارسال کنید. مثال :\n`/panel` - `!panel` - `#panel` - `panel`\n\n• ربات اصلا به کوچکی و بزرگی حروف حساس نیست و شما می توانید دستورات را به هر نحوی که مایلید ارسال کنید. مثال :\n\n`PANEl` - `panel`\n\nدر کنار برخی دستورات کلماتی مانند :\n[[reply]] - [[username]] - [[id]]\nوجود دارد.\nشما نباید عینا آنها را قرار دهید. بلکه باید جایگزین آنها را قرار دهید.\n\n〰> [[reply]]\nیعنی شما باید روی پیام یک کاربر ریپلای کنید.\n\n〰> [[username]]\nیعنی باید یوزرنیمی را قرار دهید.\n\n〰> [[id]]\nیعنی باید شناسه عددی یک فرد را قرار دهید.(برای بدست آورردن شناسه یک فرد کافی است روی آن کاربر ریپلای کنید و دستور `id` را ارسال کنید.)\n\n• شما نباید از علامت های [[ و ]] استفاده کنید !\n\n• می توانید با ارسال `panel` تنظیمات گروه |🛠️ خود را دریافت کنید .",'MarkDown',$button_back_guide);
-		}else{
-			$button_back_guide=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>"Back 🏛",'callback_data'=>"hamed"]]
-			]]);
-			editMessageText($chatid,$message_id2,"A guide to using robot commands and capabilities: ❌\n\n• You can mark robots before orders ! / # And you can even send commands without leaving the check mark. Example :\n`/panel` - `!panel` - `#panel` - `panel`\n\n• The robot is not at all small and large, and you can send commands in any way you like. Example :\n\n`PANEL` - `panel`\n\nAlong with some commands like:\n[[reply]] - [[username]] - [[id]]\nThere is.\nYou do not have to put them right. Instead, you must replace them.\n\n〰> [[reply]]\nThat is, you have to replay a user's message.\n\n〰> [[username]]\nThat means you have to put your username.\n\n〰> [[id]]\nThat is, you must place a person's numeric identifier (to get a person's identifier, simply click on that user and submit the `id` statement.)\n\n• You should not use the '[[' and ']]' symbols!\n\n• You can get group settings by sending the panel.",'MarkDown',$button_back_guide);
-		}
-		
-	}
-}
-
-if($data=='managemant'){
-	if($tc2=='private'){
-		if($chatid==$Dev){
-			file_put_contents('data/bot/step.txt',$data);
-		}
-		$button_managemant=buttonManagemant($chatid);
-		if($members[$chatid]!='english'){
-			editMessageText($chatid,$message_id2,"🏆مدیریت ربات شما🏆",'HTML',$button_managemant);
-		}else{
-			editMessageText($chatid,$message_id2,"🏆Your robot management🏆",'HTML',$button_managemant);
-		}
-	}
-}
-///////////////////////////////////////////////////////////////
-if($data=='managemant_group_private'){
-	if($tc2=='private'){
-		if($chatid==$Dev){
-			file_put_contents('data/bot/step.txt',$data);
-		}
-		$button_panel_private=buttonPanelPrivate($chatid);
-		if($members[$chatid]!='english'){
-			editMessageText($chatid,$message_id2,$text_start_fa,'MarkDown',$button_panel_private);
-		}else{
-			editMessageText($chatid,$message_id2,$text_start_en,'MarkDown',$button_panel_private);
-		}
-	}
-}
-//////////////////////////////cheetah/////////////////////////////////
-if($data=='forward'){
-	if($tc2=='private'){
-		file_put_contents('data/bot/step.txt',$data);
-		if($members[$chatid]!='english'){
-			$button=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>'🔙برگشت','callback_data'=>'managemant']]
-			]]);
-			editMessageText($chatid,$message_id2,'🔻لطفا پیام خود را ارسال کنید :','HTML',$button);
-		}else{
-			$button=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>'🔙Back','callback_data'=>'managemant']]
-			]]);
-			editMessageText($chatid,$message_id2,'🔻Please send your message :','HTML',$button);
-		}
-	}
-}
-if(isset($update->message) && $chatid==$Dev && file_get_contents('data/bot/step.txt')=='forward'){
-	file_put_contents('data/bot/step.txt','managemant');
-	$members=array_keys($members);
-	foreach($members as $key){
-		bot('forwardMessage',[
-		'chat_id'=>$key,
-		'from_chat_id'=>$chatid,
-		'message_id'=>$message_id
-		]);
-	}
-	if($members[$update->message->chat->id]!='english'){
-		sendMessage($update->message->chat->id,'پیام شما به همه ارسال شد :)','HTML',buttonManagemant($update->message->chat->id),null);
-	}else{
-		sendMessage($update->message->chat->id,'Your message sent to all :)','HTML',buttonManagemant($update->message->chat->id),null);
-	}
-	die;
-}
-//////////////////////////////////////////////////////////////////////////////////////////////
-if($data=='forward_group'){
-	if($tc2=='private'){
-		file_put_contents('data/bot/step.txt',$data);
-		if($members[$chatid]!='english'){
-			$button=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>'🔙برگشت','callback_data'=>'managemant']]
-			]]);
-			editMessageText($chatid,$message_id2,'🔻لطفا پیام خود را ارسال کنید :','HTML',$button);
-		}else{
-			$button=json_encode(['resize_keyboard'=>true,'inline_keyboard'=>[
-			[['text'=>'🔙Back','callback_data'=>'managemant']]
-			]]);
-			editMessageText($chatid,$message_id2,'🔻Please send your message :','HTML',$button);
-		}
-	}
-}
-if(isset($update->message) && $chatid==$Dev && file_get_contents('data/bot/step.txt')=='forward_group'){
-	file_put_contents('data/bot/step.txt','managemant');
-	$groups=array_keys($groups);
-	foreach($groups as $key){
-		bot('forwardMessage',[
-		'chat_id'=>$key,
-		'from_chat_id'=>$chatid,
-		'message_id'=>$message_id
-		]);
-	}
-	if($members[$update->message->chat->id]!='english'){
-		sendMessage($update->message->chat->id,'پیام شما به همه ارسال شد :)','HTML',buttonManagemant($update->message->chat->id),null);
-	}else{
-		sendMessage($update->message->chat->id,'Your message sent to all :)','HTML',buttonManagemant($update->message->chat->id),null);
-	}
-	die;
-}
-
-
+elseif($user['step'] == "unblack"  && $tc == "private"){
+if($tc == "private" && in_array($chat_id,$admins)){
+$tt = time();
+file_put_contents("data/spam/$text.txt",$tt);
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"🗑️ کاربر از بلاک لیست خارج شد!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ]
+        ]) ]); 
+ bot('sendMessage',[
+ 'chat_id'=>$text,
+ 'text'=>"♥️ شما توسط مدیریت از لیست بلاک خارج شدید!",
+ 'parse_mode'=>"MarkDown",
+	 ]);  } }
+if($data == "black" ){
+step($chatid,"black");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+ 'text'=>"🎓 شناسه کاربر را ارسال کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ]
+       ]) ]); }
+elseif($user['step'] == "black"  && $tc == "private"){
+if($tc == "private" && in_array($chat_id,$admins)){
+$tt = time() + 9999999999999999999;
+file_put_contents("data/spam/$text.txt",$tt);
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"🛡️ کاربر از ربات بلاک شد!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ]
+       ]) ]); 
+ bot('sendMessage',[
+ 'chat_id'=>$text,
+ 'text'=>"💬 شما توسط مدیریت از ربات مسدود شدید!",
+ 'parse_mode'=>"MarkDown",
+ ]);  } }
+if($data == "delkalame" ){
+step($chatid,"delkalame");
+bot('editMessagetext',[
+ 'chat_id'=>$chatid,
+'message_id'=>$messageid,
+ 'text'=>"🎓 کلمه مورد نظر را ارسال کنید:",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[
+                  [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+              ]
+      ]) ]); }
+elseif($user['step'] == "delkalame"  && $tc == "private"){
+if($tc == "private" && in_array($chat_id,$admins)){
+if(file_exists("data/kalamat/$text.txt")){
+unlink("data/kalamat/$text.txt");
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"🗑️ کلمه ارسالی از لیست ربات حذف شد!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[ [['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']],
+ ]
+       ])
+ ]); 
+}else{
+bot('sendMessage',[
+ 'chat_id'=>$chat_id,
+ 'text'=>"🎓 این کلمه از قبل در ربات ثبت نشده!",
+ 'parse_mode'=>"MarkDown",
+  'reply_markup'=>json_encode([
+            'inline_keyboard'=>[[['text'=>"🏛 منوی اصلی️",'callback_data'=>'back_p']], ]  ]) ]);  } }}
 ?>
